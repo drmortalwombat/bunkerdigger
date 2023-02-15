@@ -1,1 +1,1 @@
-..\oscar64\release\oscar64 -n bunkerdigger.c
+..\oscar64\release\oscar64 -n bunkerdigger.c -xz
