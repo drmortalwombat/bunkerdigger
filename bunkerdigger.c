@@ -6,79 +6,17 @@
 #include <string.h>
 #include <c64/joystick.h>
 #include <c64/rasterirq.h>
+#include <c64/keyboard.h>
 #include <stdlib.h>
-
-static char * const Screen	=	(char *)0xc000;
-static char * const Color	=	(char *)0xd800; 
-static char * const Sprites =  (char *)0xd000;
-static char * const Hires	=	(char *)0xe000;
-
-const char BunkerHiresData[] = {
-	#embed ctm_chars "bunkerbm.ctm"
-};
-
-const char BunkerColor0Data[] = {
-	#embed ctm_attr1 "bunkerbm.ctm"
-};
-
-const char BunkerColor1Data[] = {
-	#embed ctm_attr2 "bunkerbm.ctm"
-};
-
-const unsigned short BunkerTileData[] = {
-	#embed ctm_tiles16 word "bunkerbm.ctm"
-};
-
-const char BunkerMapData[] = {
-	#embed ctm_map8 "bunkerbm.ctm"
-};
-
-#pragma align(BunkerHiresData, 256)
-#pragma align(BunkerColor0Data, 256)
-#pragma align(BunkerColor1Data, 256)
+#include "display.h"
+#include "tiles.h"
+#include "digger.h"
+#include "minimap.h"
+#include "gamemenu.h"
 
 const char SpriteData[] = {
 	#embed spd_sprites lzo "sprites.spd"
 };
-
-void tile_draw_p(char tile, char * hp, char * sp, char * cp)
-{
-	const unsigned short * tp = BunkerTileData + 64 * tile;
-
-	for(char iy=0; iy<8; iy++)
-	{
-		for(char ix=0; ix<8; ix++)
-		{
-			unsigned short c = tp[ix];
-			const char * shp = BunkerHiresData + 8 * c;
-			#pragma unroll(full)
-			for(char i=0; i<8; i++)
-				hp[i] = shp[i];
-
-			sp[ix] = BunkerColor1Data[c];
-			cp[ix] = BunkerColor0Data[c];
-			hp += 8;
-		}
-
-		hp += 320 - 64;
-		sp += 40;
-		cp += 40;
-		tp += 8;
-	}
-
-}
-
-inline void tile_draw(char tile, char x, char y)
-{
-	__assume(y < 25);
-	__assume(x < 40);
-
-	char * hp = Hires + 320 * y + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
-
-	tile_draw_p(tile, hp, sp, cp);
-}
 
 void display_init(void)
 {
@@ -117,164 +55,120 @@ void display_init(void)
 	vspr_init(Screen);	
 }
 
-struct Digger
-{
-	char tx, ty;
-	char sx, sy;
-	char mi, mt;
-	char color;
-	signed char dx;
-};
-
-__striped Digger	diggers[32];
-
-char phase = 0;
 char sx = 0, sy = 0;
 
-void digger_move(void)
+
+
+enum IRQPhase
 {
-	char si = 0;
+	IRQP_MOVE_DIGGER,
+	IRQP_MOVE_ENEMY,
+	IRQP_UPDATE_SPRITE,
+	IRQP_USER_INPUT,
 
-	for(char i=0; i<32; i++)
-	{	
-		bool t = !((phase ^ i) & 3);
+	NUM_IRQPHASE
+}	irqphase;
 
-		if (diggers[i].dx < 0)
-		{
-			if (diggers[i].sx == 0)
-			{
-				diggers[i].tx--;
-				diggers[i].sx = 63;
-			}
-			else
-				diggers[i].sx--;
+RIRQCode	rirqlow, rirqup;
 
-			if (diggers[i].sx == 32)
-			{
-				if (diggers[i].tx == 0)
-				{
-					diggers[i].dx = 1;
-					diggers[i].mi = 64 + 11;
-				}
-			}
+void user_interaction(void)
+{
+	keyb_poll();
+	if (keyb_key & KSCAN_QUAL_DOWN)
+		gmenu_key(keyb_key & KSCAN_QUAL_MASK);
+}
 
-			if (t)
-			{
-				diggers[i].mi++;
-				if (diggers[i].mi == 64 + 9)
-					diggers[i].mi = 64 + 3;
-			}
-		}
-		else if (diggers[i].dx > 0)
-		{
-			if (diggers[i].sx == 63)
-			{
-				diggers[i].tx++;
-				diggers[i].sx = 0;
-			}
-			else
-				diggers[i].sx++;
-
-			if (diggers[i].sx == 32)
-			{
-				if (diggers[i].tx == 8)
-				{
-					diggers[i].dx = -1;
-					diggers[i].mi = 64 + 3;
-				}
-			}
-
-			if (t)
-			{
-				diggers[i].mi++;
-				if (diggers[i].mi == 64 + 17)
-					diggers[i].mi = 64 + 11;
-			}
-		}
-
-		if (diggers[i].ty >= sy && diggers[i].ty < sy + 3 &&
-			diggers[i].tx >= sx && diggers[i].tx < sx + 3)
-		{
-			vspr_set(si, 
-				12 + (char)(diggers[i].tx - sx) * 64 + diggers[i].sx,
-				50 + (char)(diggers[i].ty - sy) * 64 + diggers[i].sy,
-				diggers[i].mi, diggers[i].color);
-			si++;
-		}		
-	}
-
-	vic.color_border++;
-
-	while (si < 16)
+__interrupt void irq_lower(void)
+{
+//	vic.color_border = VCOL_GREEN;
+	vspr_update();
+	if (irqphase == IRQP_UPDATE_SPRITE)
 	{
-		vspr_move(si, 0, 255);
-		si++;
+//		vic.color_border = VCOL_CYAN;
+		rirq_sort();
 	}
 
-	phase++;
+	if (irqphase == IRQP_USER_INPUT)
+		irqphase = IRQP_MOVE_DIGGER;
+	else
+		irqphase++;
+//	vic.color_border = VCOL_BLACK;
+}
+
+__interrupt void irq_upper(void)
+{
+	switch(irqphase)
+	{
+	case IRQP_MOVE_DIGGER:
+//		vic.color_border = VCOL_RED;
+		diggers_move();
+		break;
+	case IRQP_MOVE_ENEMY:
+		break;
+	case IRQP_UPDATE_SPRITE:
+//		vic.color_border = VCOL_YELLOW;
+		{
+			char si = diggers_sprites(0, sx, sy);
+
+			while (si < 16)
+			{
+				vspr_move(si, 0, 255);
+				si++;
+			}
+		}
+
+//		vic.color_border = VCOL_CYAN;
+		vspr_sort();
+		break;
+	case IRQP_USER_INPUT:
+		user_interaction();
+		break;
+	}
+//	vic.color_border = VCOL_BLACK;
 }
 
 int main(void)
 {
 	display_init();
 
-	for(char i=0; i<32; i++)
-	{
-		diggers[i].tx = (i % 8) + 1;
-		diggers[i].ty = i / 8; 
-		diggers[i].sy = 26;
-		diggers[i].sx = 8 + rand() % 16;
-		diggers[i].color = 2 + (i % 14);
+	minimap_draw();
 
-		if (rand() & 1)
-		{
-			diggers[i].dx = 1;
-			diggers[i].mi = 64 + 11;
-		}
-		else
-		{
-			diggers[i].dx = -1;
-			diggers[i].mi = 64 + 7;
-		}
-	}
+	diggers_init();
+
+	rirq_build(&rirqlow, 1);
+	rirq_call(&rirqlow, 0, irq_lower);
+	rirq_set(8, 250, &rirqlow);
+
+	rirq_build(&rirqup, 1);
+	rirq_call(&rirqup, 0, irq_upper);
+	rirq_set(9, 10, &rirqup);
 
 	vspr_sort();
 	vspr_update();
 	rirq_sort();
 
 	// start raster IRQ processing
+
 	rirq_start();
+
+	gmenu_init();
+
+	minimap_highlight(sx, sy);
 
 	for(;;)
 	{
-		tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 0)], 8 * 0, 8 * 0);
-		tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 1)], 8 * 1, 8 * 0);
-		tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 2)], 8 * 2, 8 * 0);
+		vic.spr_enable = 0;
 
-		tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 0)], 8 * 0, 8 * 1);
-		tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 1)], 8 * 1, 8 * 1);
-		tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 2)], 8 * 2, 8 * 1);
+		tiles_draw(sx, sy);
 
-		tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 0)], 8 * 0, 8 * 2);
-		tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 1)], 8 * 1, 8 * 2);
-		tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
-
+		vic.spr_enable = 0xff;
 
 		do {
-			vic.color_border++;
-			digger_move();
-			vic.color_border++;
-			vspr_sort();
-			vic.color_border = 0;
-
+			diggers_iterate();
 			rirq_wait();
-			vic.color_border++;
-			vspr_update();
-			vic.color_border++;
-			rirq_sort();
 			joy_poll(0);
 
-		} while (!joyx[0] && !joyy[0]);
+		} while (!joyx[0] && !joyy[0] && !joyb[0]);
 
 		if (joyx[0] > 0 && sx < 13)
 			sx++;
@@ -284,6 +178,14 @@ int main(void)
 			sy++;
 		else if (joyy[0] < 0 && sy > 0)
 			sy--;
+
+		if (joyb[0])
+		{
+			tile_dig(sx + 1, sy + 1);
+			minimap_draw();
+		}
+
+		minimap_highlight(sx, sy);
 	}
 
 	return 0;
