@@ -12,9 +12,9 @@ void disp_fill(char x, char y, char w, char h, char back);
 
 void disp_text(char x, char y, const char * text, char back, char color);
 
-void disp_menu(char x, char y, const char * text, char back, char color, char colork);
+void disp_menu(char x, const char * text, char back, char color, char colork);
 
-void disp_menu_color(char x, char y, const char * text, char back, char color, char colork);
+void disp_menu_color(char x, const char * text, char back, char color, char colork);
 
 #pragma compile("display.c")
 

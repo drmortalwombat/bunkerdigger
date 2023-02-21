@@ -52,14 +52,13 @@ void disp_text(char x, char y, const char * text, char back, char color)
 	}
 }
 
-void disp_menu(char x, char y, const char * text, char back, char color, char colork)
+void disp_menu(char x, const char * text, char back, char color, char colork)
 {
-	__assume(y < 25);
 	__assume(x < 40);
 
-	char * hp = Hires + 320 * y + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * hp = Hires + 320 * 24 + x * 8;
+	char * sp = Screen + 40 * 24 + x;
+	char * cp = Color + 40 * 24 + x;
 
 	char s = 0;
 	for(char i=0; i<4; i++)
@@ -83,13 +82,12 @@ void disp_menu(char x, char y, const char * text, char back, char color, char co
 	}	
 }
 
-void disp_menu_color(char x, char y, const char * text, char back, char color, char colork)
+void disp_menu_color(char x, const char * text, char back, char color, char colork)
 {
-	__assume(y < 25);
 	__assume(x < 40);
 
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = Screen + 40 * 24 + x;
+	char * cp = Color + 40 * 24 + x;
 
 	char s = 0;
 	for(char i=0; i<4; i++)

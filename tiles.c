@@ -187,3 +187,23 @@ void tiles_draw(char sx, char sy)
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 1)], 8 * 1, 8 * 2);
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
 }
+
+static char cursor_xor_0[] = {0xff, 0xff, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xff, 0xff};
+static char cursor_xor_1[] = {0xff, 0xff, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0xff, 0xff};
+
+void tile_cursor(char x, char y)
+{
+	__assume(y < 3);
+	__assume(x < 3);
+
+	char * hp0 = Hires + 320 * (y * 8) + (x * 8) * 8;
+	char * hp1 = hp0 + 320 * 7;
+
+	for(char i=0; i<8; i++)
+	{
+		hp0[i] ^= cursor_xor_0[i];
+		hp0[i + 56] ^= cursor_xor_1[i];
+		hp1[i] ^= cursor_xor_0[i + 2];
+		hp1[i + 56] ^= cursor_xor_1[i + 2];
+	}
+}

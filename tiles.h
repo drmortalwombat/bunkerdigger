@@ -16,10 +16,22 @@ extern const char TileFlags[];
 
 extern char BunkerMapData[];
 
+enum TileMapMode
+{
+	TMMODE_REDRAW,
+	TMMODE_DRAWN,
+	TMMODE_CURSOR
+};
+
+extern TileMapMode	tmapmode;
+extern char 		mapx, mapy, tmapx, tmapy;
+
 
 void tiles_draw(char sx, char sy);
 
 void tile_dig(char x, char y);
+
+void tile_cursor(char x, char y);
 
 #pragma compile("tiles.c")
 

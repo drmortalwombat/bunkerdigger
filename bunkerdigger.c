@@ -55,10 +55,6 @@ void display_init(void)
 	vspr_init(Screen);	
 }
 
-char sx = 0, sy = 0;
-
-
-
 enum IRQPhase
 {
 	IRQP_MOVE_DIGGER,
@@ -69,13 +65,22 @@ enum IRQPhase
 	NUM_IRQPHASE
 }	irqphase;
 
-RIRQCode	rirqlow, rirqup;
+RIRQCode	rirqlow, rirqup, rirqmenu;
+
+signed char pjoyx, pjoyy;
 
 void user_interaction(void)
 {
 	keyb_poll();
+	joy_poll(0);
 	if (keyb_key & KSCAN_QUAL_DOWN)
 		gmenu_key(keyb_key & KSCAN_QUAL_MASK);
+
+	if (joyx[0] != pjoyx || joyy[0] != pjoyy || tmapmode == TMMODE_DRAWN)
+	{
+		pjoyx = joyx[0]; pjoyy = joyy[0];
+		gmenu_joy(joyx[0], joyy[0]);
+	}
 }
 
 __interrupt void irq_lower(void)
@@ -93,6 +98,8 @@ __interrupt void irq_lower(void)
 	else
 		irqphase++;
 //	vic.color_border = VCOL_BLACK;
+
+	vic.spr_priority = 0x00;
 }
 
 __interrupt void irq_upper(void)
@@ -108,7 +115,7 @@ __interrupt void irq_upper(void)
 	case IRQP_UPDATE_SPRITE:
 //		vic.color_border = VCOL_YELLOW;
 		{
-			char si = diggers_sprites(0, sx, sy);
+			char si = diggers_sprites(0, mapx, mapy);
 
 			while (si < 16)
 			{
@@ -143,6 +150,10 @@ int main(void)
 	rirq_call(&rirqup, 0, irq_upper);
 	rirq_set(9, 10, &rirqup);
 
+	rirq_build(&rirqmenu, 1);
+	rirq_write(&rirqmenu, 0, &vic.spr_priority, 0xff);
+	rirq_set(10, 241, &rirqmenu);
+
 	vspr_sort();
 	vspr_update();
 	rirq_sort();
@@ -153,39 +164,22 @@ int main(void)
 
 	gmenu_init();
 
-	minimap_highlight(sx, sy);
-
 	for(;;)
 	{
-		vic.spr_enable = 0;
 
-		tiles_draw(sx, sy);
-
-		vic.spr_enable = 0xff;
-
-		do {
-			diggers_iterate();
-			rirq_wait();
-			joy_poll(0);
-
-		} while (!joyx[0] && !joyy[0] && !joyb[0]);
-
-		if (joyx[0] > 0 && sx < 13)
-			sx++;
-		else if (joyx[0] < 0 && sx > 0)
-			sx--;
-		if (joyy[0] > 0 && sy < 13)
-			sy++;
-		else if (joyy[0] < 0 && sy > 0)
-			sy--;
-
-		if (joyb[0])
+		if (tmapmode == TMMODE_REDRAW)
 		{
-			tile_dig(sx + 1, sy + 1);
-			minimap_draw();
+			vic.spr_enable = 0x00;
+			mapx = tmapx;
+			mapy = tmapy;
+			tiles_draw(mapx, mapy);
+			minimap_highlight(mapx, mapy);			
+			vic.spr_enable = 0xff;
+			tmapmode = TMMODE_DRAWN;
 		}
+		else
+			diggers_iterate();
 
-		minimap_highlight(sx, sy);
 	}
 
 	return 0;
