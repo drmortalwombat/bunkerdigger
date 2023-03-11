@@ -61,6 +61,16 @@ const char TileFlags[] = {
 	TF_ROOM | TF_BUNKER | TF_LR, 
 	TF_ROOM | TF_BUNKER | TF_LR, 
 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+
 	TF_NONE, TF_NONE, TF_NONE, TF_NONE
 };
 
@@ -206,4 +216,62 @@ void tile_cursor(char x, char y)
 		hp1[i] ^= cursor_xor_0[i + 2];
 		hp1[i + 56] ^= cursor_xor_1[i + 2];
 	}
+}
+
+char queue[256];
+signed char dist[256];
+
+char tile_plan(char si, char di)
+{
+	if (si == di)
+		return di;
+
+	for(int i=0; i<256; i++)
+		dist[i] = 0;
+
+	dist[di] = 99;
+	queue[0] = di;
+
+	char ri = 0, wi = 1;
+	while (ri < wi)
+	{
+		char p = queue[ri++];
+		if (p == si)
+		{
+			signed char dir = dist[p];
+
+			do {
+				p += dir;
+			} while (dist[p] == dir);
+
+			return p;
+		}
+		else
+		{
+			char tf = TileFlags[BunkerMapData[p]];
+
+			if ((tf & TF_LEFT) && dist[(char)(p - 1)] == 0)
+			{				
+				dist[(char)(p - 1)] = 1;
+				queue[wi++] = (char)(p - 1);
+			}
+			if ((tf & TF_RIGHT) && dist[(char)(p + 1)] == 0)
+			{				
+				dist[(char)(p + 1)] = -1;
+				queue[wi++] = (char)(p + 1);
+			}
+			if ((tf & TF_UP) && dist[(char)(p - 16)] == 0)
+			{				
+				dist[(char)(p - 16)] = 16;
+				queue[wi++] = (char)(p - 16);
+			}
+			if ((tf & TF_DOWN) && dist[(char)(p + 16)] == 0)
+			{				
+				dist[(char)(p + 16)] = -16;
+				queue[wi++] = (char)(p + 16);
+			}
+		}
+	}
+
+	return si;
 }

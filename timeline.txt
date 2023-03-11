@@ -1,0 +1,27 @@
+
+01:00 Build Water works
+02:00 Build resource mine for carbon
+03:00 Build research lab
+03:30 Start Researching
+04:00 Build resource mine for metal
+04:30 Build additional storage room
+
+#05:00 Running out of resources from start store
+
+10:00 Build radio station
+12:00 Radio station becomes active
+14:00 Minig expert appeats if radio station was active
+14:30 Dig through rock strata
+15:00 Build fusion reactor
+
+20:00 Contact to enemy base on moon
+22:00 Receive thread from enemies on moon
+
+23:00 Rocket Scientist appears if radio station was active
+24:00 Start Rocketbase
+25:00 Start Missile building
+30:00 Send missile to destroy enemy on moon
+32:00 Moon destroyed, earth in peril of being destroyed
+#35:00 Bunker destroyed by rocket from moon
+40:00 Launch rocket to mars
+#45:00 Earth destroyed by meteors from moon

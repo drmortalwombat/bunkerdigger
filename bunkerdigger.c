@@ -68,19 +68,25 @@ enum IRQPhase
 RIRQCode	rirqlow, rirqup, rirqmenu;
 
 signed char pjoyx, pjoyy;
+bool		pjoyb;
 
 void user_interaction(void)
 {
 	keyb_poll();
 	joy_poll(0);
+
 	if (keyb_key & KSCAN_QUAL_DOWN)
 		gmenu_key(keyb_key & KSCAN_QUAL_MASK);
 
-	if (joyx[0] != pjoyx || joyy[0] != pjoyy || tmapmode == TMMODE_DRAWN)
-	{
-		pjoyx = joyx[0]; pjoyy = joyy[0];
+	if (joyb[0])
+		gmenu_nav(joyx[0]);
+	else if (pjoyb)
+		gmenu_push();
+	else if (joyx[0] != pjoyx || joyy[0] != pjoyy || tmapmode == TMMODE_DRAWN)
 		gmenu_joy(joyx[0], joyy[0]);
-	}
+
+	pjoyx = joyx[0]; pjoyy = joyy[0];
+	pjoyb = joyb[0];
 }
 
 __interrupt void irq_lower(void)
@@ -164,6 +170,9 @@ int main(void)
 
 	gmenu_init();
 
+	statusview = STVIEW_MINIMAP;
+	minimap_highlight(mapx, mapy);			
+	
 	for(;;)
 	{
 
@@ -173,9 +182,61 @@ int main(void)
 			mapx = tmapx;
 			mapy = tmapy;
 			tiles_draw(mapx, mapy);
-			minimap_highlight(mapx, mapy);			
+			if (statusview == STVIEW_MINIMAP)
+				minimap_highlight(mapx, mapy);			
 			vic.spr_enable = 0xff;
 			tmapmode = TMMODE_DRAWN;
+		}
+		else if (diggerchanged)
+		{
+			if (statusview == STVIEW_TEAM)
+				diggers_list();
+			diggerchanged = false;
+		}
+		else if (gmenu != GMENU_NONE)
+		{
+			switch (gmenu)
+			{
+			case GMENU_MAP:
+				statusview = STVIEW_MINIMAP;
+				minimap_draw();
+				minimap_highlight(mapx, mapy);
+				break;
+			case GMENU_TEAM:
+				if (statusview == STVIEW_TEAM)
+				{
+					tmapmode = TMMODE_REDRAW;
+					tmapx = cursorx = diggers[diggeri].tx;
+					tmapy = cursory = diggers[diggeri].ty;
+				}
+				else
+				{				
+					statusview = STVIEW_TEAM;
+					diggers_list();
+				}
+				break;
+			case GMENU_DIG:
+				tmapmode = TMMODE_REDRAW;
+				tile_dig(cursorx, cursory);
+				if (statusview == STVIEW_MINIMAP)
+					minimap_draw();
+				break;
+			case GMENU_ASSIGN:
+				{
+					char ri = cursorx + 16 * cursory;
+
+					diggers_vacate_room(ri);
+					diggers[diggeri].task = DTASK_MOVE;
+					diggers[diggeri].target = ri;
+				}
+				break;
+			case GMENU_GUARD:
+				diggers[diggeri].task = DTASK_GUARD;
+				diggers[diggeri].target = cursorx + 16 * cursory;
+				break;
+			}
+
+			gmenu = GMENU_NONE;
 		}
 		else
 			diggers_iterate();

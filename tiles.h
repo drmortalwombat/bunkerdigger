@@ -23,6 +23,30 @@ enum TileMapMode
 	TMMODE_CURSOR
 };
 
+enum RoomTile
+{
+	RTILE_QUARTERS,
+	RTILE_HYDRO,
+	RTILE_MINE,
+	RTILE_AIR,
+	RTILE_GENERATOR,
+	RTILE_WORKBENCH,
+	RTILE_LABORATORY,
+	RTILE_CENTRIFUGE,
+	RTILE_GYM,
+	RTILE_ARMOURY,
+	RTILE_SICKBAY,
+	RTILE_STUDY,
+	RTILE_DIGGER,
+	RTILE_STORAGE,
+	RTILE_LAUNCH_TOP,
+	RTILE_LAUNCH_MID,
+	RTILE_LAUNCH_BOTTOM,
+	RTILE_MISSILE_TOP,
+	RTILE_MISSILE_MID,
+	RTILE_MISSILE_BOTTOM,
+};
+
 extern TileMapMode	tmapmode;
 extern char 		mapx, mapy, tmapx, tmapy;
 
@@ -32,6 +56,8 @@ void tiles_draw(char sx, char sy);
 void tile_dig(char x, char y);
 
 void tile_cursor(char x, char y);
+
+char tile_plan(char si, char di);
 
 #pragma compile("tiles.c")
 

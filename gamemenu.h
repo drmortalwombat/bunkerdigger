@@ -12,12 +12,24 @@ enum GameMenu
 
 	GMENU_DIG,
 	GMENU_BUILD,
-	GMENU_ASSIGN
+	GMENU_ASSIGN,
+	GMENU_GUARD
 };
-
 
 extern GameMenu	gmenu;
 extern char gmenux;
+extern char cursorx, cursory;
+extern char diggeri;
+extern bool diggerchanged;
+
+enum StatusView
+{
+	STVIEW_MINIMAP,
+	STVIEW_TEAM
+};
+
+extern StatusView	statusview;
+
 
 void gmenu_init(void);
 
@@ -25,7 +37,9 @@ void gmenu_set(char x);
 
 void gmenu_key(char keyb);
 
-void gmenu_move(signed char dx, signed char dy);
+void gmenu_nav(signed char dx);
+
+void gmenu_push(void);
 
 void gmenu_joy(signed char dx, signed char dy);
 
