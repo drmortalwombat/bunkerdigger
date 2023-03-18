@@ -8,6 +8,8 @@ static char * const Color	=	(char *)0xd800;
 static char * const Sprites =  (char *)0xd000;
 static char * const Hires	=	(char *)0xe000;
 
+extern __striped char * const HiresRow[25];
+
 void disp_fill(char x, char y, char w, char h, char back);
 
 void disp_text(char x, char y, const char * text, char back, char color);
@@ -19,6 +21,8 @@ void disp_chars(char x, char y, const char * text, char n, char back, char color
 void disp_space(char x, char y, char n, char back, char color);
 
 void disp_bar(char x, char y, char w, char back, char color);
+
+void disp_rbar(char x, char y, char w, char total, char color);
 
 void disp_vbar(char x, char y, char h, char back, char color);
 

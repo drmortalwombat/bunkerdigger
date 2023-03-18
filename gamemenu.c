@@ -8,6 +8,10 @@ GameMenu	gmenu;
 char gmenux;
 char cursorx, cursory;
 char diggerx, diggery;
+char diggeri;
+bool diggerchanged;
+char buildingi;
+bool buildingchanged;
 
 StatusView	statusview;
 
@@ -218,6 +222,37 @@ void gmenu_joy(signed char dx, signed char dy)
 		{
 			diggeri = di;
 			diggerchanged = true;
+		}
+	}
+	else if (statusview == STVIEW_BUILD)
+	{
+		char bi = buildingi;
+
+		if (dy < 0)
+		{
+			if (bi > 1)
+			{
+//				do
+//				{
+					bi--;
+//				} while (diggers[di].state == DS_FREE && di > 0);
+			}
+		}
+		else if (dy > 0)
+		{
+			if (bi < 15)
+			{
+//				do
+//				{
+					bi++;
+//				} while (diggers[di].state == DS_FREE && di < 30);
+			}
+		}
+
+		if (bi != buildingi)
+		{
+			buildingi = bi;
+			buildingchanged = true;
 		}
 	}
 }

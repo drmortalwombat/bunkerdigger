@@ -21,11 +21,14 @@ extern char gmenux;
 extern char cursorx, cursory;
 extern char diggeri;
 extern bool diggerchanged;
+extern char buildingi;
+extern bool buildingchanged;
 
 enum StatusView
 {
 	STVIEW_MINIMAP,
-	STVIEW_TEAM
+	STVIEW_TEAM,
+	STVIEW_BUILD
 };
 
 extern StatusView	statusview;

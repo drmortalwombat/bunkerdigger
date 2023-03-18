@@ -17,9 +17,13 @@ const unsigned short BunkerTileData[] = {
 	#embed ctm_tiles16 word "bunkerbm.ctm"
 };
 
+#if 0
 char BunkerMapData[] = {
 	#embed ctm_map8 "bunkerbm.ctm"
 };
+#endif
+
+char BunkerMapData[256];
 
 #pragma align(BunkerHiresData, 256)
 #pragma align(BunkerColor0Data, 256)
@@ -71,8 +75,58 @@ const char TileFlags[] = {
 	TF_ROOM | TF_BUNKER | TF_LR, 
 	TF_ROOM | TF_BUNKER | TF_LR, 
 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+	TF_ROOM | TF_BUNKER | TF_LR, 
+
 	TF_NONE, TF_NONE, TF_NONE, TF_NONE
 };
+
+struct tile_strata
+{
+	GroundType	type;
+	char		x, y, w, h;
+} tiles_strata[] = {
+	{GTYPE_ROCK,  2,  1,  4, 1},
+	{GTYPE_ROCK,  8,  3,  1, 2},
+	{GTYPE_ROCK, 11,  5,  3, 1},
+	{GTYPE_ROCK,  4,  9,  3, 1},
+	{GTYPE_ROCK,  9,  11, 4, 2},	 
+
+	{GTYPE_METAL,  12,  2, 5, 1},	 
+	{GTYPE_CARBON, 5,   6, 3, 1},	 
+};
+
+
+
+void tiles_init(void)
+{
+	memset(TileMapFlags, 0, 256);
+
+	for(int i=0; i<256; i++)
+		BunkerMapData[i] = 40 + (rand() & 1);
+
+	BunkerMapData[ 7] = 12;
+	BunkerMapData[ 8] = 16 + RTILE_WORKBENCH;
+	BunkerMapData[ 9] = 16 + RTILE_QUARTERS;
+	BunkerMapData[10] = 13;
+
+
+	for(char i=0; i<7; i++)
+	{
+		char ip = tiles_strata[i].y * 16 + tiles_strata[i].x;
+		char w = tiles_strata[i].w, h = tiles_strata[i].h;
+		GroundType t = tiles_strata[i].type;
+
+		for(char y=0; y<h; y++)
+		{
+			for(char x=0; x<w; x++)
+				TileMapFlags[ip + x] = t;
+			ip += 16;
+		}
+	}
+}
 
 
 bool tile_is_bunker(char x, char y)
@@ -143,7 +197,15 @@ void tile_dig(char x, char y)
 		tile_expand(x, y + 1, TF_UP);
 }
 
-void tile_draw_p(char tile, char * hp, char * sp, char * cp)
+static char tile_ground_color[] = {
+	VCOL_BROWN,
+	VCOL_LT_GREY,
+	VCOL_MED_GREY,
+	VCOL_BLACK,
+	VCOL_PURPLE
+};
+
+void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 {
 	const unsigned short * tp = BunkerTileData + 64 * tile;
 
@@ -168,9 +230,45 @@ void tile_draw_p(char tile, char * hp, char * sp, char * cp)
 		tp += 8;
 	}
 
+	char	gc = tile_ground_color[flags & 0x0f];
+	cp -= 40;
+	for(char ix=0; ix<8; ix++)
+		cp[ix] = gc;
+	cp -= 7 * 40;
+	cp[0] = gc;
+	cp[7] = gc;
 }
 
-inline void tile_draw(char tile, char x, char y)
+void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
+{
+	const unsigned short * tp = BunkerTileData + 64 * tile;
+
+	char	gc = tile_ground_color[flags & 0x0f];
+
+	for(char iy=0; iy<8; iy++)
+	{
+		for(char ix=0; ix<8; ix++)
+		{
+			unsigned short c = tp[ix];
+			const char * shp = BunkerHiresData + 8 * c;
+			#pragma unroll(full)
+			for(char i=0; i<8; i++)
+				hp[i] = shp[i];
+
+			sp[ix] = BunkerColor1Data[c];
+			cp[ix] = gc;
+			hp += 8;
+		}
+
+		hp += 320 - 64;
+		sp += 40;
+		cp += 40;
+		tp += 8;
+	}
+
+}
+
+inline void tile_draw(char tile, char flags, char x, char y)
 {
 	__assume(y < 25);
 	__assume(x < 40);
@@ -179,27 +277,38 @@ inline void tile_draw(char tile, char x, char y)
 	char * sp = Screen + 40 * y + x;
 	char * cp = Color + 40 * y + x;
 
-	tile_draw_p(tile, hp, sp, cp);
+	if (TileFlags[tile] & TF_ROOM)
+		tile_draw_p(tile, flags, hp, sp, cp);
+	else
+		tile_draw_g(tile, flags, hp, sp, cp);
 }
 
 
 void tiles_draw(char sx, char sy)
 {
-	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 0)], 8 * 0, 8 * 0);
-	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 1)], 8 * 1, 8 * 0);
-	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 2)], 8 * 2, 8 * 0);
+	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 0)], TileMapFlags[(sy + 0) * 16 + (sx + 0)], 8 * 0, 8 * 0);
+	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 1)], TileMapFlags[(sy + 0) * 16 + (sx + 1)], 8 * 1, 8 * 0);
+	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 2)], TileMapFlags[(sy + 0) * 16 + (sx + 2)], 8 * 2, 8 * 0);
 
-	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 0)], 8 * 0, 8 * 1);
-	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 1)], 8 * 1, 8 * 1);
-	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 2)], 8 * 2, 8 * 1);
+	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 0)], TileMapFlags[(sy + 1) * 16 + (sx + 0)], 8 * 0, 8 * 1);
+	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 1)], TileMapFlags[(sy + 1) * 16 + (sx + 1)], 8 * 1, 8 * 1);
+	tile_draw(BunkerMapData[(sy + 1) * 16 + (sx + 2)], TileMapFlags[(sy + 1) * 16 + (sx + 2)], 8 * 2, 8 * 1);
 
-	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 0)], 8 * 0, 8 * 2);
-	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 1)], 8 * 1, 8 * 2);
-	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
+	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 0)], TileMapFlags[(sy + 2) * 16 + (sx + 0)], 8 * 0, 8 * 2);
+	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 1)], TileMapFlags[(sy + 2) * 16 + (sx + 1)], 8 * 1, 8 * 2);
+	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], TileMapFlags[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
 }
 
-static char cursor_xor_0[] = {0xff, 0xff, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xff, 0xff};
-static char cursor_xor_1[] = {0xff, 0xff, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0xff, 0xff};
+static char cursor_xor_0[] = {
+	0xff, 0xff, 0xe8, 0xe8, 0xe0, 0xe0, 
+	0xc0, 0xc0,
+	0xe0, 0xe0, 0xe8, 0xe8, 0xff, 0xff
+};
+static char cursor_xor_1[] = {
+	0xff, 0xff, 0x2b, 0x2b, 0x0b, 0x0b, 
+	0x03, 0x03,
+	0x0b, 0x0b, 0x2b, 0x2b, 0xff, 0xff
+};
 
 void tile_cursor(char x, char y)
 {
@@ -213,8 +322,8 @@ void tile_cursor(char x, char y)
 	{
 		hp0[i] ^= cursor_xor_0[i];
 		hp0[i + 56] ^= cursor_xor_1[i];
-		hp1[i] ^= cursor_xor_0[i + 2];
-		hp1[i + 56] ^= cursor_xor_1[i + 2];
+		hp1[i] ^= cursor_xor_0[i + 6];
+		hp1[i + 56] ^= cursor_xor_1[i + 6];
 	}
 }
 
@@ -275,3 +384,4 @@ char tile_plan(char si, char di)
 
 	return si;
 }
+

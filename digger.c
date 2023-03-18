@@ -1,5 +1,6 @@
 #include "digger.h"
 #include "tiles.h"
+#include "resources.h"
 #include <c64/sprites.h>
 
 extern __striped Digger	diggers[32];
@@ -20,16 +21,21 @@ void diggers_init(void)
 	for(char i=0; i<32; i++)
 		diggers[i].state = DS_FREE;
 
-	diggers[0].tx = 0;
+	diggers[0].tx = 8;
 	diggers[0].ty = 0; 
 	diggers[0].sy = 8;
 	diggers[0].sx = 8;
 	diggers[0].mi = 64 + 1;
 	diggers[0].color = VCOL_RED;
 	diggers[0].state = DS_IDLE;
-	diggers[0].task = DTASK_MOVE;
-	diggers[0].target = 0x4a;
+	diggers[0].task = DTASK_IDLE;
+	diggers[0].target = 0;
+	diggers[0].ability = 1;
+	diggers[0].fight = 1;
+	diggers[0].intelligence = 1;
+	diggers[0].health = DIGGER_MAX_HEALTH;
 
+#if 0
 	diggers[1].tx = 8;
 	diggers[1].ty = 6; 
 	diggers[1].sy = 8;
@@ -39,6 +45,10 @@ void diggers_init(void)
 	diggers[1].state = DS_IDLE;
 	diggers[1].task = DTASK_MOVE;
 	diggers[1].target = 0x4a;
+	diggers[1].ability = 1;
+	diggers[1].fight = 1;
+	diggers[1].intelligence = 1;
+	diggers[1].health = DIGGER_MAX_HEALTH;
 
 	diggers[2].tx = 0;
 	diggers[2].ty = 4; 
@@ -49,6 +59,11 @@ void diggers_init(void)
 	diggers[2].state = DS_IDLE;
 	diggers[2].task = DTASK_MOVE;
 	diggers[2].target = 0x4a;
+	diggers[2].ability = 1;
+	diggers[2].fight = 1;
+	diggers[2].intelligence = 1;
+	diggers[2].health = DIGGER_MAX_HEALTH;
+#endif
 }
 
 
@@ -142,6 +157,14 @@ void diggers_move(void)
 					diggers[i].mi = 64 + 18;				
 			}
 			break;		
+		case DS_WORKING:
+			diggers[i].mi = 64;
+			if (!(irqcount & 3) && diggers[i].count)
+				diggers[i].count--;
+			break;
+		case DS_IDLE:
+			diggers[i].mi = 65;
+			break;
 		}
 	}
 }
@@ -232,10 +255,7 @@ void digger_decide(char di)
 		}
 		else
 		{
-			vic.color_border++;
 			char mi = tile_plan(ti, diggers[di].target);
-			vic.color_border--;
-
 			if (mi == ti)
 			{
 				diggers[di].task = DTASK_IDLE;
@@ -253,11 +273,12 @@ void digger_decide(char di)
 			digger_move_random(di);
 		else
 		{
-			vic.color_border++;
 			char mi = tile_plan(ti, diggers[di].target);
-			vic.color_border--;
 			digger_move_to(di, mi);
 		}
+		break;
+	case DTASK_WORK:
+		digger_work(di);
 		break;
 	}	
 }
@@ -305,6 +326,7 @@ void diggers_vacate_room(char ri)
 			if (diggers[i].task == DTASK_MOVE || diggers[i].task == DTASK_WORK)
 			{
 				diggers[i].task = DTASK_IDLE;
+				diggers[i].state = DS_IDLE;
 				diggerchanged = true;
 			}
 		}
@@ -326,7 +348,7 @@ void diggers_list(void)
 
 			disp_char(x + 0, y, ' ', c, VCOL_BLACK);
 			disp_char(x + 1, y, digger_task_char[diggers[i].task], c, VCOL_WHITE + 16 * VCOL_LT_GREY);
-			disp_vbar(x + 2, y, y & 7, c, VCOL_WHITE + 16 * VCOL_LT_GREY);
+			disp_vbar(x + 2, y, 8 - ((diggers[i].health + 7) >> 3), c + 16 * VCOL_LT_GREY, VCOL_WHITE);
 			disp_chars(x + 3, y, digger_names + i * 5, 5, c, diggers[i].color + 16 * VCOL_DARK_GREY);
 			disp_char(x + 7, y, ' ', c, VCOL_BLACK);
 		}
@@ -335,4 +357,129 @@ void diggers_list(void)
 			disp_space(x, y, 8, VCOL_BLACK, VCOL_BLACK);
 		}
 	}
+}
+
+void digger_stats(void)
+{
+
+	disp_char(24, 21, digger_task_char[diggers[diggeri].task], VCOL_BLACK, VCOL_WHITE + 16 * VCOL_LT_GREY);
+	disp_char(25, 21, ' ', VCOL_BLACK, VCOL_BLACK);
+	disp_chars(26, 21, digger_names + diggeri * 5, 5, VCOL_BLACK, diggers[diggeri].color + 16 * VCOL_DARK_GREY);
+
+	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, VCOL_WHITE + 16 * VCOL_DARK_GREY);
+
+	disp_char(24, 22 , 'A', 0x00, 0xf1);
+	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_DARK_GREY);
+
+	disp_char(29, 22 , 'F', 0x00, 0xf1);
+	disp_rbar(30, 22, diggers[diggeri].fight, DIGGER_MAX_SKILL, VCOL_RED + 16 * VCOL_DARK_GREY);
+
+	disp_char(34, 22 , 'I', 0x00, 0xf1);
+	disp_rbar(35, 22, diggers[diggeri].intelligence, DIGGER_MAX_SKILL, VCOL_BLUE + 16 * VCOL_DARK_GREY);
+}
+
+bool digger_work(char di)
+{
+	if (diggers[di].task == DTASK_WORK && diggers[di].state == DS_IDLE)
+	{
+		char ti = diggers[di].target;
+		char tile = BunkerMapData[ti];
+		if (TileFlags[tile] & TF_ROOM)
+		{
+			RoomTile	rt = tile - 16;
+			switch (rt)
+			{
+			case RTILE_HYDRO:
+				if (res_stored[RES_ENERGY])
+				{
+					res_stored[RES_ENERGY]--;
+					diggers[di].count = 4;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+
+			case RTILE_GENERATOR:
+				diggers[di].count = 2;
+				diggers[di].state = DS_WORKING;
+				return true;
+
+			case RTILE_SICKBAY:
+				diggers[di].count = 4;
+				diggers[di].state = DS_WORKING;
+				return true;
+
+			case RTILE_WORKBENCH:
+				if (res_stored[RES_ENERGY])
+				{
+					res_stored[RES_ENERGY]--;
+					diggers[di].count = 4;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+
+			case RTILE_LABORATORY:
+				if (res_stored[RES_ENERGY] && res_stored[RES_CARBON])
+				{
+					res_stored[RES_CARBON]--;
+					res_stored[RES_METAL]--;
+					diggers[di].count = 4;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+
+			case RTILE_MINE:
+				if (res_stored[RES_ENERGY] &&
+					(TileMapFlags[ti] == GTYPE_METAL ||
+					 TileMapFlags[ti] == GTYPE_CARBON ||
+					 TileMapFlags[ti] == GTYPE_URANIUM))
+				{
+					res_stored[RES_ENERGY]--;
+					diggers[di].count = 8;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				else
+					return false;
+
+			case RTILE_GYM:
+				diggers[di].count = 50 * (1 + (diggers[di].ability >> 2));
+				diggers[di].state = DS_WORKING;
+				return true;
+
+			case RTILE_ARMOURY:
+				diggers[di].count = 50 * (1 + (diggers[di].fight >> 2));
+				diggers[di].state = DS_WORKING;
+				return true;
+
+			case RTILE_STUDY:
+				diggers[di].count = 50 * (1 + (diggers[di].intelligence >> 2));
+				diggers[di].state = DS_WORKING;
+				return true;
+
+			case RTILE_EXCAVATOR:
+				if (res_stored[RES_ENERGY])
+				{
+					res_stored[RES_ENERGY]--;
+					diggers[di].count = 4;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+			case RTILE_VENTILATION:
+				if (res_stored[RES_ENERGY])
+				{
+					res_stored[RES_ENERGY]--;
+					diggers[di].count = 4;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+			}
+		}
+	}
+
+	return false;
 }

@@ -13,6 +13,12 @@
 #include "digger.h"
 #include "minimap.h"
 #include "gamemenu.h"
+#include "resources.h"
+#include "rooms.h"
+
+#pragma stacksize(512)
+
+#pragma region( stack, 0x0400, 0x0600, , , {stack})
 
 const char SpriteData[] = {
 	#embed spd_sprites lzo "sprites.spd"
@@ -70,6 +76,8 @@ RIRQCode	rirqlow, rirqup, rirqmenu;
 signed char pjoyx, pjoyy;
 bool		pjoyb;
 
+char		irqcount;
+
 void user_interaction(void)
 {
 	keyb_poll();
@@ -100,7 +108,10 @@ __interrupt void irq_lower(void)
 	}
 
 	if (irqphase == IRQP_USER_INPUT)
+	{
 		irqphase = IRQP_MOVE_DIGGER;
+		irqcount++;
+	}
 	else
 		irqphase++;
 //	vic.color_border = VCOL_BLACK;
@@ -143,6 +154,7 @@ __interrupt void irq_upper(void)
 int main(void)
 {
 	display_init();
+	tiles_init();
 
 	minimap_draw();
 
@@ -170,9 +182,15 @@ int main(void)
 
 	gmenu_init();
 
+	res_init();
+
+	rooms_count();
+
 	statusview = STVIEW_MINIMAP;
 	minimap_highlight(mapx, mapy);			
 	
+	char	rescount = irqcount;
+
 	for(;;)
 	{
 
@@ -193,6 +211,12 @@ int main(void)
 				diggers_list();
 			diggerchanged = false;
 		}
+		else if (buildingchanged)
+		{
+			if (statusview == STVIEW_BUILD)
+				rooms_display();
+			buildingchanged = false;			
+		}
 		else if (gmenu != GMENU_NONE)
 		{
 			switch (gmenu)
@@ -205,9 +229,31 @@ int main(void)
 			case GMENU_TEAM:
 				if (statusview == STVIEW_TEAM)
 				{
-					tmapmode = TMMODE_REDRAW;
-					tmapx = cursorx = diggers[diggeri].tx;
-					tmapy = cursory = diggers[diggeri].ty;
+					cursorx = diggers[diggeri].tx;
+					cursory = diggers[diggeri].ty;
+
+					char tx, ty;
+
+					if (cursorx == 0)
+						tx = 0;
+					else if (cursorx < 15)
+						tx = cursorx - 1;
+					else
+						tx = 14;
+
+					if (cursory == 0)
+						ty = 0;
+					else if (cursory < 15)
+						ty = cursory - 1;
+					else
+						ty = 14;
+
+					if (tx != tmapx || ty != tmapy)
+					{
+						tmapx = tx;
+						tmapy = ty;
+						tmapmode = TMMODE_REDRAW;					
+					}
 				}
 				else
 				{				
@@ -234,12 +280,38 @@ int main(void)
 				diggers[diggeri].task = DTASK_GUARD;
 				diggers[diggeri].target = cursorx + 16 * cursory;
 				break;
+			case GMENU_BUILD:
+				if (statusview == STVIEW_BUILD)
+				{
+					if (rooms_build())
+						tmapmode = TMMODE_REDRAW;
+				}
+				else
+				{
+					statusview = STVIEW_BUILD;
+					rooms_display();
+				}
+				break;
+
+
 			}
 
 			gmenu = GMENU_NONE;
 		}
 		else
+		{
+			while ((char)(irqcount - rescount) >= 3)
+			{
+				res_update();
+				rescount += 3;
+				if (rooms_check_construction())
+					tmapmode = TMMODE_REDRAW;
+				res_display();
+				digger_stats();
+			}
+
 			diggers_iterate();
+		}
 
 	}
 
