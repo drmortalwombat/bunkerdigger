@@ -21,8 +21,8 @@ const RoomInfo		room_infos[16] = {
 
 	{7, 4, 0},
 	{4, 0, 0},
+	{2, 5, 0},	
 	{1, 3, 2},
-	{0, 0, 0},	
 };
 
 
@@ -44,8 +44,8 @@ const char room_names[16 * 10 + 1] =
 
 	"EXCAVATOR "	
 	"STORAGE   "
-	"LAUNCH    "
-	"NONE      ";
+	"RADIO     "
+	"LAUNCH    ";
 
 Construction			room_constructions[4];
 char					room_num_construction;
@@ -64,6 +64,26 @@ void rooms_count(void)
 				rt = RTILE_LAUNCH_TOP;
 			room_count[rt]++;
 		}
+	}
+
+	char	nstore = room_count[RTILE_STORAGE];
+
+	res_storage[RES_ENERGY] = 8 + 8 * room_count[RTILE_GENERATOR];
+
+	res_storage[RES_BUILDING] = 4 * room_count[RTILE_WORKBENCH];
+	res_storage[RES_HEALING] = 4 * room_count[RTILE_SICKBAY];
+	res_storage[RES_WATER] = 8 + 4 * room_count[RTILE_HYDRO];
+
+	res_storage[RES_METAL] = 8 + 16 * nstore;
+	res_storage[RES_CARBON] = 4 + 8 * nstore;
+	res_storage[RES_URANIUM] = 2 * nstore;
+
+	for(char i=0; i<NUM_RESOURCES; i++)
+	{
+		char s = (res_storage[i] + 15) & ~15;
+		if (s > MAX_STORAGE)
+			s = MAX_STORAGE;
+		res_storage[i] = s;
 	}
 }
 
@@ -126,10 +146,12 @@ bool rooms_build(void)
 
 			room_constructions[room_num_construction].tile = ti;
 			room_constructions[room_num_construction].count = 
-				10 + 
-				5 * room_infos[buildingi].res_metal + 
-				10 * room_infos[buildingi].res_carbon + 
-				20 * room_infos[buildingi].res_uranium;
+			room_constructions[room_num_construction].step = 
+				1 + 
+				1 * room_infos[buildingi].res_metal + 
+				2 * room_infos[buildingi].res_carbon + 
+				4 * room_infos[buildingi].res_uranium;
+			room_constructions[room_num_construction].progress = 0;
 			room_constructions[room_num_construction].room = buildingi;
 			room_num_construction++;
 
@@ -148,12 +170,30 @@ bool rooms_check_construction(void)
 	char i = 0, j = 0;
 	while (i < room_num_construction)
 	{		
+		bool	done = false;
+
 		if (res_stored[RES_BUILDING] && !--room_constructions[i].count)
+		{
+			res_stored[RES_BUILDING]--;
+			room_constructions[i].progress++;
+			room_constructions[i].count = room_constructions[i].step;
+			if (room_constructions[i].progress == 8)
+				done = true;			
+		}
+
+		char x = room_constructions[i].tile & 0x0f;
+		char y = room_constructions[i].tile >> 4;
+
+		if ((char)(x - mapx) < 3 && (char)(y - mapy) < 3)
+			disp_bbar(8 * (x - mapx) + 2, 8 * (y - mapy) + 4, room_constructions[i].progress);
+
+		if (done)
 		{
 			BunkerMapData[room_constructions[i].tile] = room_constructions[i].room + 16;
 
 			room_count[room_constructions[i].room]++;
-			buildingchanged = true;
+
+			buildingchanged = true;			
 		}
 		else
 		{
@@ -164,6 +204,8 @@ bool rooms_check_construction(void)
 
 		i++;
 	}
+
+	room_num_construction = j;
 
 	return i != j;
 }

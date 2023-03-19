@@ -151,6 +151,13 @@ __interrupt void irq_upper(void)
 //	vic.color_border = VCOL_BLACK;
 }
 
+void status_mapview(void)
+{
+	statusview = STVIEW_MINIMAP;
+	minimap_draw();
+	minimap_highlight(mapx, mapy);
+}
+
 int main(void)
 {
 	display_init();
@@ -186,6 +193,9 @@ int main(void)
 
 	rooms_count();
 
+	res_stored[RES_METAL] = 16;
+	res_stored[RES_CARBON] = 16;
+
 	statusview = STVIEW_MINIMAP;
 	minimap_highlight(mapx, mapy);			
 	
@@ -213,6 +223,7 @@ int main(void)
 		}
 		else if (buildingchanged)
 		{
+			rooms_count();				
 			if (statusview == STVIEW_BUILD)
 				rooms_display();
 			buildingchanged = false;			
@@ -222,9 +233,7 @@ int main(void)
 			switch (gmenu)
 			{
 			case GMENU_MAP:
-				statusview = STVIEW_MINIMAP;
-				minimap_draw();
-				minimap_highlight(mapx, mapy);
+				status_mapview();
 				break;
 			case GMENU_TEAM:
 				if (statusview == STVIEW_TEAM)
@@ -268,6 +277,7 @@ int main(void)
 					minimap_draw();
 				break;
 			case GMENU_ASSIGN:
+				if (diggers[diggeri].task != DTASK_DEAD)
 				{
 					char ri = cursorx + 16 * cursory;
 
@@ -275,16 +285,21 @@ int main(void)
 					diggers[diggeri].task = DTASK_MOVE;
 					diggers[diggeri].target = ri;
 				}
+				status_mapview();
 				break;
 			case GMENU_GUARD:
-				diggers[diggeri].task = DTASK_GUARD;
-				diggers[diggeri].target = cursorx + 16 * cursory;
+				if (diggers[diggeri].task != DTASK_DEAD)
+				{
+					diggers[diggeri].task = DTASK_GUARD;
+					diggers[diggeri].target = cursorx + 16 * cursory;
+				}
 				break;
 			case GMENU_BUILD:
 				if (statusview == STVIEW_BUILD)
 				{
 					if (rooms_build())
 						tmapmode = TMMODE_REDRAW;
+					status_mapview();
 				}
 				else
 				{

@@ -6,13 +6,15 @@ enum DiggerTask
 	DTASK_WORK,
 	DTASK_MOVE,
 	DTASK_GUARD,
-	DTASK_IDLE
+	DTASK_IDLE,
+	DTASK_DEAD
 };
 
 enum DiggerState
 {
 	DS_FREE,
 	DS_IDLE,
+	DS_DEAD,
 	DS_MOVE_RIGHT,
 	DS_MOVE_LEFT,
 	DS_CLIMB_UP,
@@ -54,6 +56,8 @@ char diggers_sprites(char si, char sx, char sy);
 void diggers_list(void);
 
 void digger_stats(void);
+
+void digger_check_color(char di);
 
 bool digger_work(char di);
 

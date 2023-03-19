@@ -26,6 +26,8 @@ void disp_rbar(char x, char y, char w, char total, char color);
 
 void disp_vbar(char x, char y, char h, char back, char color);
 
+void disp_bbar(char x, char y, char w);
+
 void disp_menu(char x, const char * text, char back, char color, char colork);
 
 void disp_menu_color(char x, const char * text, char back, char color, char colork);

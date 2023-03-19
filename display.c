@@ -167,6 +167,51 @@ void disp_bar(char x, char y, char w, char back, char color)
 	}
 }
 
+void disp_bbar(char x, char y, char w)
+{
+	__assume(y < 25);
+	__assume(x < 40);
+
+	char * hp = HiresRow[y] + x * 8;
+
+	for(char i=1; i<7; i++)
+		hp[i] &= 0xfc;
+	hp += 8;
+
+	char m0 = barmask[w & 3] & 0x55;
+	char m1 = 0x00;
+	hp[1] = 0x00;
+	hp[9] = 0x00;
+	hp[6] = 0x00;
+	hp[14] = 0x00;
+
+	if (w >= 8)
+	{
+		m0 = 0x55; 
+		m1 = 0x55;
+	}
+	else if (w >= 4)
+	{
+		m1 = m0;
+		m0 = 0x55;
+	}
+
+	hp[2] = m0;
+	hp[3] = m0;		
+	hp[4] = m0;		
+	hp[5] = m0;		
+
+	hp[10] = m1;
+	hp[11] = m1;		
+	hp[12] = m1;		
+	hp[13] = m1;		
+
+	hp += 16;
+	for(char i=1; i<7; i++)
+		hp[i] &= 0x3f;
+}
+
+
 void disp_chars(char x, char y, const char * text, char n, char back, char color)
 {
 	__assume(y < 25);

@@ -31,16 +31,25 @@ void res_generate(char di)
 			res_stored[RES_RESEARCH] += diggers[di].intelligence;
 			break;
 		case RTILE_GYM:
-			if (diggers[di].ability < DIGGER_MAX_SKILL)				
+			if (diggers[di].ability < DIGGER_MAX_SKILL)
+			{		
 				diggers[di].ability++;
+				digger_check_color(di);
+			}
 			break;
 		case RTILE_ARMOURY:
 			if (diggers[di].fight < DIGGER_MAX_SKILL)
+			{
 				diggers[di].fight++;
+				digger_check_color(di);
+			}
 			break;
 		case RTILE_STUDY:
 			if (diggers[di].intelligence < DIGGER_MAX_SKILL)
+			{				
 				diggers[di].intelligence++;
+				digger_check_color(di);
+			}
 			break;
 		case RTILE_EXCAVATOR:
 			res_stored[RES_DIGGING] += diggers[di].ability;
@@ -80,12 +89,7 @@ void res_init(void)
 {
 	digger_heal = 0;
 	for(char i=0; i<NUM_RESOURCES; i++)
-	{
 		res_stored[i] = 0;
-		res_storage[i] = 32;
-	}
-
-	res_stored[RES_METAL] = 8;
 }
 
 void res_update(void)
@@ -110,7 +114,8 @@ void res_update(void)
 			{
 				if (diggers[i].count == 0)
 				{
-					res_generate(i);
+					if (diggers[i].task == DTASK_WORK)
+						res_generate(i);
 					diggers[i].state = DS_IDLE;
 				}
 			}
@@ -127,6 +132,12 @@ void res_update(void)
 		{
 			diggers[i].health--;
 			diggerchanged = true;
+			if (diggers[i].health == 0)
+			{
+				diggers[i].state = DS_DEAD;
+				diggers[i].count = 50;
+				diggers[i].task = DTASK_DEAD;
+			}
 		}
 	}
 

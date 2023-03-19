@@ -19,6 +19,8 @@ enum Resource
 	NUM_RESOURCES
 };
 
+#define MAX_STORAGE		128
+
 extern char	res_stored[NUM_RESOURCES];
 extern char res_storage[NUM_RESOURCES];
 

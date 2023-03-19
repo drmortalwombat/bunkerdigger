@@ -6,7 +6,7 @@
 extern __striped Digger	diggers[32];
 
 static const char digger_task_char[] = {
-	'W', 'M', 'G', 'I'
+	'W', 'M', 'G', 'I', 'D'
 };
 
 extern const char * digger_names = 
@@ -34,6 +34,8 @@ void diggers_init(void)
 	diggers[0].fight = 1;
 	diggers[0].intelligence = 1;
 	diggers[0].health = DIGGER_MAX_HEALTH;
+
+	digger_check_color(0);
 
 #if 0
 	diggers[1].tx = 8;
@@ -64,6 +66,21 @@ void diggers_init(void)
 	diggers[2].intelligence = 1;
 	diggers[2].health = DIGGER_MAX_HEALTH;
 #endif
+}
+
+void digger_check_color(char di)
+{
+	if (diggers[di].intelligence > diggers[di].ability)
+	{
+		if (diggers[di].intelligence > diggers[di].fight)
+			diggers[di].color = VCOL_BLUE;
+		else
+			diggers[di].color = VCOL_RED;
+	}
+	else if (diggers[di].ability > diggers[di].fight)
+		diggers[di].color = VCOL_YELLOW;
+	else
+		diggers[di].color = VCOL_RED;
 }
 
 
@@ -158,7 +175,17 @@ void diggers_move(void)
 			}
 			break;		
 		case DS_WORKING:
-			diggers[i].mi = 64;
+			if (diggers[i].task == DTASK_WORK)
+			{
+				diggers[i].mi = 64;
+				if (!(irqcount & 3) && diggers[i].count)
+					diggers[i].count--;
+			}
+			else
+				diggers[i].count = 0;
+			break;
+		case DS_DEAD:
+			diggers[i].mi = 88;
 			if (!(irqcount & 3) && diggers[i].count)
 				diggers[i].count--;
 			break;

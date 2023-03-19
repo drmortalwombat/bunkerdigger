@@ -8,7 +8,7 @@ struct RoomInfo
 
 struct Construction
 {
-	char	tile, room, count;
+	char	tile, room, count, step, progress;
 };
 
 
