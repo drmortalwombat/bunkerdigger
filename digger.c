@@ -9,7 +9,9 @@ static const char digger_task_char[] = {
 	'W', 'M', 'G', 'I', 'D'
 };
 
-extern const char * digger_names = 
+char diggers_born;
+
+const char digger_names[] = 
 	"MIKE JIM  JOE  CARL CLIFFMARK BILL ANDY "
 	"ALEX FRED CHRISBOB  TIM  TOM  JAMESSIMON"
 	"JILL JANE LISA MONA TILLYSUSANMARTHBETH "
@@ -26,7 +28,7 @@ void diggers_init(void)
 	diggers[0].sy = 8;
 	diggers[0].sx = 8;
 	diggers[0].mi = 64 + 1;
-	diggers[0].color = VCOL_RED;
+	diggers[0].color = VCOL_LT_GREY;
 	diggers[0].state = DS_IDLE;
 	diggers[0].task = DTASK_IDLE;
 	diggers[0].target = 0;
@@ -36,6 +38,8 @@ void diggers_init(void)
 	diggers[0].health = DIGGER_MAX_HEALTH;
 
 	digger_check_color(0);
+
+	diggers_born = 1;
 
 #if 0
 	diggers[1].tx = 8;
@@ -70,17 +74,41 @@ void diggers_init(void)
 
 void digger_check_color(char di)
 {
+	char color = VCOL_LT_GREY;
+
 	if (diggers[di].intelligence > diggers[di].ability)
 	{
 		if (diggers[di].intelligence > diggers[di].fight)
-			diggers[di].color = VCOL_BLUE;
+		{
+			if (diggers[di].intelligence > 8)
+				color = VCOL_PURPLE;
+			else if (diggers[di].intelligence > 1)
+				color = VCOL_BLUE;
+		}
 		else
-			diggers[di].color = VCOL_RED;
+		{
+			if (diggers[di].fight > 8)
+				color = VCOL_LT_RED;
+			else if (diggers[di].fight > 1)
+				color = VCOL_RED;
+		}
 	}
 	else if (diggers[di].ability > diggers[di].fight)
-		diggers[di].color = VCOL_YELLOW;
+	{
+		if (diggers[di].ability > 8)
+			color = VCOL_YELLOW;
+		else if (diggers[di].ability > 1)
+			color = VCOL_GREEN;
+	}
 	else
-		diggers[di].color = VCOL_RED;
+	{
+		if (diggers[di].fight > 8)
+			color = VCOL_LT_RED;
+		else if (diggers[di].fight > 1)
+			color = VCOL_RED;
+	}
+
+	diggers[di].color = color;
 }
 
 
@@ -314,6 +342,13 @@ void diggers_iterate(void)
 {
 	for(char i=0; i<32; i++)
 	{	
+		if (diggers[i].state >= DS_IDLE && diggers[i].health == 0)
+		{
+			diggers[i].state = DS_DEAD;
+			diggers[i].count = 50;
+			diggers[i].task = DTASK_DEAD;
+		}
+
 		if (diggers[i].state == DS_IDLE)
 			digger_decide(i);
 	}
@@ -459,9 +494,9 @@ bool digger_work(char di)
 
 			case RTILE_MINE:
 				if (res_stored[RES_ENERGY] &&
-					(TileMapFlags[ti] == GTYPE_METAL ||
-					 TileMapFlags[ti] == GTYPE_CARBON ||
-					 TileMapFlags[ti] == GTYPE_URANIUM))
+					((TileMapFlags[ti] & GROUND_TYPE_MASK) == GTYPE_METAL ||
+					 (TileMapFlags[ti] & GROUND_TYPE_MASK) == GTYPE_CARBON ||
+					 (TileMapFlags[ti] & GROUND_TYPE_MASK) == GTYPE_URANIUM))
 				{
 					res_stored[RES_ENERGY]--;
 					diggers[di].count = 8;
@@ -505,6 +540,40 @@ bool digger_work(char di)
 				}
 				break;
 			}
+		}
+	}
+
+	return false;
+}
+
+
+bool digger_procreate(void)
+{
+	if (diggers_born < 32)
+	{
+		char ri = rand() & 255;
+		if (BunkerMapData[ri] == RTILE_QUARTERS + 16)
+		{
+			char di = diggers_born;
+
+			diggers[di].tx = ri & 0x0f;
+			diggers[di].ty = ri >> 4; 
+			diggers[di].sy = 8;
+			diggers[di].sx = 8;
+			diggers[di].mi = 64 + 1;
+			diggers[di].color = VCOL_LT_GREY;
+			diggers[di].state = DS_IDLE;
+			diggers[di].task = DTASK_IDLE;
+			diggers[di].target = 0;
+			diggers[di].ability = 1;
+			diggers[di].fight = 1;
+			diggers[di].intelligence = 1;
+			diggers[di].health = DIGGER_MAX_HEALTH;
+
+			diggers_born++;
+			diggerchanged = true;
+
+			return true;
 		}
 	}
 

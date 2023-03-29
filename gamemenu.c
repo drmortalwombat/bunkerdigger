@@ -230,7 +230,7 @@ void gmenu_joy(signed char dx, signed char dy)
 
 		if (dy < 0)
 		{
-			if (bi > 1)
+			if (bi > 0)
 			{
 //				do
 //				{

@@ -13,8 +13,8 @@ enum DiggerTask
 enum DiggerState
 {
 	DS_FREE,
-	DS_IDLE,
 	DS_DEAD,
+	DS_IDLE,
 	DS_MOVE_RIGHT,
 	DS_MOVE_LEFT,
 	DS_CLIMB_UP,
@@ -40,8 +40,9 @@ struct Digger
 	char					ability, fight, intelligence, health;
 };
 
+extern char	diggers_born;
+
 extern __striped Digger	diggers[32];
-extern const char * digger_names;
 
 void diggers_init(void);
 
@@ -60,6 +61,8 @@ void digger_stats(void);
 void digger_check_color(char di);
 
 bool digger_work(char di);
+
+bool digger_procreate(void);
 
 #pragma compile("digger.c")
 

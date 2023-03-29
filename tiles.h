@@ -67,6 +67,9 @@ enum GroundType
 	NUM_GROUND_TYPES
 };
 
+#define GROUND_TYPE_MASK		0x07
+#define GROUND_TYPE_RESOURCE	0xf8
+
 extern TileMapMode	tmapmode;
 extern char 		mapx, mapy, tmapx, tmapy;
 
@@ -75,7 +78,7 @@ void tiles_init(void);
 
 void tiles_draw(char sx, char sy);
 
-void tile_dig(char x, char y);
+bool tile_dig(char x, char y);
 
 void tile_cursor(char x, char y);
 

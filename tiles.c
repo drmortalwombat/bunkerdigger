@@ -94,8 +94,8 @@ struct tile_strata
 	{GTYPE_ROCK,  4,  9,  3, 1},
 	{GTYPE_ROCK,  9,  11, 4, 2},	 
 
-	{GTYPE_METAL,  12,  2, 5, 1},	 
-	{GTYPE_CARBON, 5,   6, 3, 1},	 
+	{GTYPE_METAL  | 0x40,  12,  2, 5, 1},	 
+	{GTYPE_CARBON | 0x20,   5,  6, 3, 1},	 
 };
 
 
@@ -163,8 +163,12 @@ bool tile_expand(char x, char y, char flags)
 	return false;
 }
 
-void tile_dig(char x, char y)
+bool tile_dig(char x, char y)
 {
+	if (TileMapFlags[16 * y + x] == GTYPE_ROCK && !room_count[RTILE_EXCAVATOR])
+		return false;
+
+
 	char	flags = TF_BUNKER;
 	if (x > 0 && tile_is_bunker(x - 1, y))
 		flags |= TF_LEFT;
@@ -195,6 +199,8 @@ void tile_dig(char x, char y)
 		tile_expand(x, y - 1, TF_DOWN);
 	if (flags & TF_DOWN)
 		tile_expand(x, y + 1, TF_UP);
+
+	return true;
 }
 
 static char tile_ground_color[] = {
@@ -230,7 +236,7 @@ void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 		tp += 8;
 	}
 
-	char	gc = tile_ground_color[flags & 0x0f];
+	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
 	cp -= 40;
 	for(char ix=0; ix<8; ix++)
 		cp[ix] = gc;
@@ -243,7 +249,7 @@ void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 {
 	const unsigned short * tp = BunkerTileData + 64 * tile;
 
-	char	gc = tile_ground_color[flags & 0x0f];
+	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
 
 	for(char iy=0; iy<8; iy++)
 	{

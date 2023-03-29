@@ -15,6 +15,7 @@
 #include "gamemenu.h"
 #include "resources.h"
 #include "rooms.h"
+#include "gamemusic.h"
 
 #pragma stacksize(512)
 
@@ -121,6 +122,8 @@ __interrupt void irq_lower(void)
 
 __interrupt void irq_upper(void)
 {
+	music_play();
+	
 	switch(irqphase)
 	{
 	case IRQP_MOVE_DIGGER:
@@ -148,6 +151,7 @@ __interrupt void irq_upper(void)
 		user_interaction();
 		break;
 	}
+
 //	vic.color_border = VCOL_BLACK;
 }
 
@@ -195,14 +199,23 @@ int main(void)
 
 	res_stored[RES_METAL] = 16;
 	res_stored[RES_CARBON] = 16;
+	res_stored[RES_WATER] = 16;
 
 	statusview = STVIEW_MINIMAP;
 	minimap_highlight(mapx, mapy);			
 	
 	char	rescount = irqcount;
 
+	music_init(TUNE_THEME_GENERAL_1);
+
 	for(;;)
 	{
+		if (tune_queue == tune_current)
+		{
+			char c = tune_queue - TUNE_THEME_GENERAL_1 + 1 + (rand() & 1);
+			if (c >= 3) c -= 3;
+			music_queue(TUNE_THEME_GENERAL_1 + c);
+		}
 
 		if (tmapmode == TMMODE_REDRAW)
 		{
@@ -272,9 +285,11 @@ int main(void)
 				break;
 			case GMENU_DIG:
 				tmapmode = TMMODE_REDRAW;
-				tile_dig(cursorx, cursory);
-				if (statusview == STVIEW_MINIMAP)
-					minimap_draw();
+				if (tile_dig(cursorx, cursory))
+				{
+					if (statusview == STVIEW_MINIMAP)
+						minimap_draw();
+				}
 				break;
 			case GMENU_ASSIGN:
 				if (diggers[diggeri].task != DTASK_DEAD)
@@ -326,6 +341,9 @@ int main(void)
 			}
 
 			diggers_iterate();
+
+			if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2)
+				digger_procreate();
 		}
 
 	}

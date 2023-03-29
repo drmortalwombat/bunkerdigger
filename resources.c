@@ -66,17 +66,26 @@ void res_generate(char di)
 			}
 			break;
 		case RTILE_MINE:
-			switch(TileMapFlags[ti])
+			if (TileMapFlags[ti] & GROUND_TYPE_RESOURCE)
 			{
-			case GTYPE_METAL:
-				res_stored[RES_METAL] += diggers[di].ability;
-				break;
-			case GTYPE_CARBON:
-				res_stored[RES_CARBON] += diggers[di].ability;
-				break;
-			case GTYPE_URANIUM:
-				res_stored[RES_URANIUM] += diggers[di].ability;
-				break;
+				switch(TileMapFlags[ti] & GROUND_TYPE_MASK)
+				{
+				case GTYPE_METAL:
+					res_stored[RES_METAL] += diggers[di].ability;
+					break;
+				case GTYPE_CARBON:
+					res_stored[RES_CARBON] += diggers[di].ability;
+					break;
+				case GTYPE_URANIUM:
+					res_stored[RES_URANIUM] += diggers[di].ability;
+					break;
+				}
+				TileMapFlags[ti] -= 0x08;
+				if (!(TileMapFlags[ti] & GROUND_TYPE_RESOURCE))
+				{
+					TileMapFlags[ti] = GTYPE_SOIL;
+					tmapmode = TMMODE_REDRAW;
+				}
 			}
 			break;
 		}
@@ -84,10 +93,12 @@ void res_generate(char di)
 }
 
 char digger_heal;
+char digger_water_index;
 
 void res_init(void)
 {
 	digger_heal = 0;
+	digger_water_index = 0;
 	for(char i=0; i<NUM_RESOURCES; i++)
 		res_stored[i] = 0;
 }
@@ -126,18 +137,24 @@ void res_update(void)
 		}
 	}
 
-	for(char i=0; i<32; i++)
+	if (diggers[digger_water_index].state != DS_FREE)
 	{
+		if (res_stored[RES_WATER] > 0)
+			res_stored[RES_WATER]--;
+		else if (diggers[digger_water_index].health > 0)
+		{
+			diggers[digger_water_index].health--;			
+			diggerchanged = true;
+		}
+	}
+	digger_water_index = (digger_water_index + 1) & 31;
+
+	for(char i=0; i<32; i++)
+	{		
 		if (diggers[i].state != DS_FREE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
 		{
 			diggers[i].health--;
 			diggerchanged = true;
-			if (diggers[i].health == 0)
-			{
-				diggers[i].state = DS_DEAD;
-				diggers[i].count = 50;
-				diggers[i].task = DTASK_DEAD;
-			}
 		}
 	}
 
