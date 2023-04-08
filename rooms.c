@@ -5,14 +5,14 @@
 
 const RoomInfo		room_infos[16] = {
 	{1, 0, 0},
+	{4, 0, 0},
 	{1, 0, 0},
 	{2, 0, 0},
-	{1, 0, 0},
 
-	{2, 0, 0},
+	{1, 0, 0},
 	{3, 0, 0},
-	{1, 1, 0},
-	{2, 4, 0},
+	{4, 1, 0},
+	{4, 0, 0},
 
 	{2, 3, 0},
 	{4, 1, 0},
@@ -28,14 +28,14 @@ const RoomInfo		room_infos[16] = {
 
 const char room_names[16 * 10 + 1] = 
 	"QUARTERS  "
-	"HYDRO     "
-	"MINE      "
-	"VENTILATOR"
-
-	"GENERATOR "
 	"WORKBENCH "
+	"HYDRO     "
+	"GENERATOR "
+
+	"MINE      "
+	"STORAGE   "
 	"LABORATORY"
-	"CENTRIFUGE"
+	"VENTILATOR"
 
 	"GYM       "
 	"ARMOURY   "
@@ -43,7 +43,7 @@ const char room_names[16 * 10 + 1] =
 	"STUDY     "
 
 	"EXCAVATOR "	
-	"STORAGE   "
+	"CENTRIFUGE"
 	"RADIO     "
 	"LAUNCH    ";
 
@@ -59,7 +59,7 @@ void rooms_count(void)
 		char tile = BunkerMapData[i];
 		if (TileFlags[tile] & TF_ROOM)
 		{
-			RoomTile	rt = tile - 16;
+			RoomTile	rt = tile - TILE_ROOMS;
 			if (rt > RTILE_LAUNCH_TOP)
 				rt = RTILE_LAUNCH_TOP;
 			room_count[rt]++;
@@ -89,16 +89,16 @@ void rooms_count(void)
 
 void rooms_display(void)
 {
-	for(char i=0; i<16; i++)
+	for(char i=0; i<rooms_researched; i++)
 	{
 		char cnt = room_count[i];
 
 		char c = VCOL_BLACK;
 		char fc = VCOL_WHITE + 16 * VCOL_LT_GREY;
 
-		if (res_stored[RES_METAL] < room_infos[i].res_metal ||
-			res_stored[RES_CARBON] < room_infos[i].res_carbon ||
-			res_stored[RES_URANIUM] < room_infos[i].res_uranium)
+		if (res_stored[RES_METAL] < 4 * room_infos[i].res_metal ||
+			res_stored[RES_CARBON] < 4 * room_infos[i].res_carbon ||
+			res_stored[RES_URANIUM] < 4 * room_infos[i].res_uranium)
 		{
 			fc = VCOL_LT_BLUE + 16 * VCOL_BLUE;
 			if ( i == buildingi)
@@ -124,25 +124,33 @@ void rooms_display(void)
 		disp_char(38, i, '0' + room_infos[i].res_carbon, VCOL_BLACK, 0xbc);
 		disp_char(39, i, '0' + room_infos[i].res_uranium, VCOL_BLACK, 0x64);
 	}
+
+	for(char i=rooms_researched; i<16; i++)
+		disp_space(24, i, 16, VCOL_BLACK, VCOL_BLACK);
 }
 
 bool rooms_build(void)
 {
 	if (room_num_construction < 4 &&
-		res_stored[RES_METAL] >= room_infos[buildingi].res_metal &&
-		res_stored[RES_CARBON] >= room_infos[buildingi].res_carbon &&
-		res_stored[RES_URANIUM] >= room_infos[buildingi].res_uranium)
+		res_stored[RES_METAL] >= 4 * room_infos[buildingi].res_metal &&
+		res_stored[RES_CARBON] >= 4 * room_infos[buildingi].res_carbon &&
+		res_stored[RES_URANIUM] >= 4 * room_infos[buildingi].res_uranium)
 	{
 		char	ti = cursorx + 16 * cursory;
 
 		char 	tile = BunkerMapData[ti];
+		if (tile >= TILE_ROOMS)
+		{
+			tile = TILE_FLOOR;
+		}
+
 		if (tile == TILE_FLOOR)
 		{
-			res_stored[RES_METAL] -= room_infos[buildingi].res_metal;
-			res_stored[RES_CARBON] -= room_infos[buildingi].res_carbon;
-			res_stored[RES_URANIUM] -= room_infos[buildingi].res_uranium;
+			res_stored[RES_METAL] -= 4 * room_infos[buildingi].res_metal;
+			res_stored[RES_CARBON] -= 4 * room_infos[buildingi].res_carbon;
+			res_stored[RES_URANIUM] -= 4 * room_infos[buildingi].res_uranium;
 
-			BunkerMapData[ti] = RTILE_CONSTRUCTION + 16;
+			BunkerMapData[ti] = RTILE_CONSTRUCTION + TILE_ROOMS;
 
 			room_constructions[room_num_construction].tile = ti;
 			room_constructions[room_num_construction].count = 
@@ -189,7 +197,7 @@ bool rooms_check_construction(void)
 
 		if (done)
 		{
-			BunkerMapData[room_constructions[i].tile] = room_constructions[i].room + 16;
+			BunkerMapData[room_constructions[i].tile] = room_constructions[i].room + TILE_ROOMS;
 
 			room_count[room_constructions[i].room]++;
 

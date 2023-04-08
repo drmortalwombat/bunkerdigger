@@ -88,14 +88,32 @@ struct tile_strata
 	GroundType	type;
 	char		x, y, w, h;
 } tiles_strata[] = {
-	{GTYPE_ROCK,  2,  1,  4, 1},
-	{GTYPE_ROCK,  8,  3,  1, 2},
-	{GTYPE_ROCK, 11,  5,  3, 1},
-	{GTYPE_ROCK,  4,  9,  3, 1},
-	{GTYPE_ROCK,  9,  11, 4, 2},	 
+	{GTYPE_ROCK,  0,  4,  5, 1},
+	{GTYPE_ROCK,  4,  5,  4, 1},
+	{GTYPE_ROCK,  8,  4,  2, 1},
+	{GTYPE_ROCK, 11,  6,  5, 1},	 
 
-	{GTYPE_METAL  | 0x40,  12,  2, 5, 1},	 
-	{GTYPE_CARBON | 0x20,   5,  6, 3, 1},	 
+	{GTYPE_ROCK,  4,  8,  6, 1},	 
+	{GTYPE_ROCK,  0,  9,  5, 1},	 	
+	{GTYPE_ROCK,  9,  9,  2, 1},
+	{GTYPE_ROCK, 10, 10,  6, 1},
+
+	{GTYPE_ROCK,  3, 12,  3, 1},	 
+	{GTYPE_ROCK,  6, 13,  2, 1},	 
+	{GTYPE_ROCK,  6, 14,  3, 1},
+
+	{GTYPE_ROCK, 13, 15,  3, 1},
+
+	{GTYPE_METAL  | 0xf8,  11,  2, 2, 1},	 
+	{GTYPE_METAL  | 0xf8,  11,  3, 2, 1},	 
+	{GTYPE_METAL  | 0xf8,   1,  7, 2, 1},	 
+	{GTYPE_METAL  | 0xf8,  13,  7, 2, 1},	 
+	{GTYPE_METAL  | 0xf8,   1,  8, 2, 1},	 
+
+	{GTYPE_CARBON | 0x70,   2,  3, 1, 1},	 
+	{GTYPE_CARBON | 0x70,   6,  4, 1, 1},	 
+	{GTYPE_CARBON | 0x70,   1,  5, 2, 1},	 
+	{GTYPE_CARBON | 0x70,  12,  9, 3, 1},	 
 };
 
 
@@ -113,7 +131,7 @@ void tiles_init(void)
 	BunkerMapData[10] = 13;
 
 
-	for(char i=0; i<7; i++)
+	for(char i=0; i<sizeof(tiles_strata)/sizeof(tile_strata); i++)
 	{
 		char ip = tiles_strata[i].y * 16 + tiles_strata[i].x;
 		char w = tiles_strata[i].w, h = tiles_strata[i].h;
@@ -122,7 +140,11 @@ void tiles_init(void)
 		for(char y=0; y<h; y++)
 		{
 			for(char x=0; x<w; x++)
+			{
 				TileMapFlags[ip + x] = t;
+				if (t == GTYPE_ROCK)
+					BunkerMapData[ip + x] = 42;
+			}
 			ip += 16;
 		}
 	}
@@ -205,7 +227,7 @@ bool tile_dig(char x, char y)
 
 static char tile_ground_color[] = {
 	VCOL_BROWN,
-	VCOL_LT_GREY,
+	VCOL_DARK_GREY,
 	VCOL_MED_GREY,
 	VCOL_BLACK,
 	VCOL_PURPLE
@@ -305,18 +327,31 @@ void tiles_draw(char sx, char sy)
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], TileMapFlags[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
 }
 
-static char cursor_xor_0[] = {
-	0xff, 0xff, 0xe8, 0xe8, 0xe0, 0xe0, 
-	0xc0, 0xc0,
-	0xe0, 0xe0, 0xe8, 0xe8, 0xff, 0xff
+static char cursor_or_0[] = {
+	0x00, 0x00, 0x14, 0x14, 0x10, 0x10,
+	0x00, 0x00,
+	0x10, 0x10, 0x14, 0x14, 0x00, 0x00
 };
-static char cursor_xor_1[] = {
-	0xff, 0xff, 0x2b, 0x2b, 0x0b, 0x0b, 
-	0x03, 0x03,
-	0x0b, 0x0b, 0x2b, 0x2b, 0xff, 0xff
+static char cursor_or_1[] = {
+	0x00, 0x00, 0x14, 0x14, 0x04, 0x04, 
+	0x00, 0x00,
+	0x04, 0x04, 0x14, 0x14, 0x00, 0x00
 };
 
-void tile_cursor(char x, char y)
+static char cursor_and_0[] = {
+	0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 
+	0x0f, 0x0f,
+	0x03, 0x03, 0x00, 0x00, 0x00, 0x00
+};
+static char cursor_and_1[] = {
+	0x00, 0x00, 0x00, 0x00, 0xc0, 0xc0, 
+	0xf0, 0xf0,
+	0xc0, 0xc0, 0x00, 0x00, 0x00, 0x00
+};
+
+char cursor_back[4][8];
+
+void tile_cursor_show(char x, char y)
 {
 	__assume(y < 3);
 	__assume(x < 3);
@@ -326,12 +361,35 @@ void tile_cursor(char x, char y)
 
 	for(char i=0; i<8; i++)
 	{
-		hp0[i] ^= cursor_xor_0[i];
-		hp0[i + 56] ^= cursor_xor_1[i];
-		hp1[i] ^= cursor_xor_0[i + 6];
-		hp1[i + 56] ^= cursor_xor_1[i + 6];
+		cursor_back[0][i] = hp0[i];
+		hp0[i     ] = hp0[i     ] & cursor_and_0[i] | cursor_or_0[i];
+		cursor_back[1][i] = hp0[i + 56];
+		hp0[i + 56] = hp0[i + 56] & cursor_and_1[i] | cursor_or_1[i];
+		cursor_back[2][i] = hp1[i];
+		hp1[i     ] = hp1[i     ] & cursor_and_0[i + 6] | cursor_or_0[i + 6];
+		cursor_back[3][i] = hp1[i + 56];
+		hp1[i + 56] = hp1[i + 56] & cursor_and_1[i + 6] | cursor_or_1[i + 6];
 	}
 }
+
+void tile_cursor_hide(char x, char y)
+{
+	__assume(y < 3);
+	__assume(x < 3);
+
+	char * hp0 = Hires + 320 * (y * 8) + (x * 8) * 8;
+	char * hp1 = hp0 + 320 * 7;
+
+	for(char i=0; i<8; i++)
+	{
+		hp0[i]= cursor_back[0][i];
+		hp0[i + 56] = cursor_back[1][i];
+		hp1[i] = cursor_back[2][i];
+		hp1[i + 56] = cursor_back[3][i];
+	}
+}
+
+
 
 char queue[256];
 signed char dist[256];

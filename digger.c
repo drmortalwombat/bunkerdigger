@@ -365,10 +365,14 @@ char diggers_sprites(char si, char sx, char sy)
 
 			if (dx < 3 && dy < 3)
 			{
+				char c = diggers[i].color;
+				if (i == diggeri && (irqcount & 1))
+					c = VCOL_DARK_GREY;
+
 				vspr_set(si, 
 					12 + dx * 64 + diggers[i].sx * 4,
 					44 + dy * 64 + diggers[i].sy * 4,
-					diggers[i].mi, diggers[i].color);
+					diggers[i].mi, c);
 				si++;
 				if (si == 16)
 					break;
@@ -428,16 +432,16 @@ void digger_stats(void)
 	disp_char(25, 21, ' ', VCOL_BLACK, VCOL_BLACK);
 	disp_chars(26, 21, digger_names + diggeri * 5, 5, VCOL_BLACK, diggers[diggeri].color + 16 * VCOL_DARK_GREY);
 
-	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, VCOL_WHITE + 16 * VCOL_DARK_GREY);
+	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, 32, VCOL_WHITE + 16 * VCOL_DARK_GREY);
 
 	disp_char(24, 22 , 'A', 0x00, 0xf1);
-	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_DARK_GREY);
+	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_DARK_GREY);
 
 	disp_char(29, 22 , 'F', 0x00, 0xf1);
-	disp_rbar(30, 22, diggers[diggeri].fight, DIGGER_MAX_SKILL, VCOL_RED + 16 * VCOL_DARK_GREY);
+	disp_rbar(30, 22, diggers[diggeri].fight, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_RED + 16 * VCOL_DARK_GREY);
 
 	disp_char(34, 22 , 'I', 0x00, 0xf1);
-	disp_rbar(35, 22, diggers[diggeri].intelligence, DIGGER_MAX_SKILL, VCOL_BLUE + 16 * VCOL_DARK_GREY);
+	disp_rbar(35, 22, diggers[diggeri].intelligence, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_BLUE + 16 * VCOL_DARK_GREY);
 }
 
 bool digger_work(char di)
@@ -485,7 +489,7 @@ bool digger_work(char di)
 				if (res_stored[RES_ENERGY] && res_stored[RES_CARBON])
 				{
 					res_stored[RES_CARBON]--;
-					res_stored[RES_METAL]--;
+					res_stored[RES_ENERGY]--;
 					diggers[di].count = 4;
 					diggers[di].state = DS_WORKING;
 					return true;

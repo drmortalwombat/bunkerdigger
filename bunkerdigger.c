@@ -16,9 +16,11 @@
 #include "resources.h"
 #include "rooms.h"
 #include "gamemusic.h"
+#include "gameirq.h"
 
 #pragma stacksize(512)
 
+#pragma region( main, 0x0880, 0xa000, , , {code, data, bss, heap})
 #pragma region( stack, 0x0400, 0x0600, , , {stack})
 
 const char SpriteData[] = {
@@ -62,99 +64,6 @@ void display_init(void)
 	vspr_init(Screen);	
 }
 
-enum IRQPhase
-{
-	IRQP_MOVE_DIGGER,
-	IRQP_MOVE_ENEMY,
-	IRQP_UPDATE_SPRITE,
-	IRQP_USER_INPUT,
-
-	NUM_IRQPHASE
-}	irqphase;
-
-RIRQCode	rirqlow, rirqup, rirqmenu;
-
-signed char pjoyx, pjoyy;
-bool		pjoyb;
-
-char		irqcount;
-
-void user_interaction(void)
-{
-	keyb_poll();
-	joy_poll(0);
-
-	if (keyb_key & KSCAN_QUAL_DOWN)
-		gmenu_key(keyb_key & KSCAN_QUAL_MASK);
-
-	if (joyb[0])
-		gmenu_nav(joyx[0]);
-	else if (pjoyb)
-		gmenu_push();
-	else if (joyx[0] != pjoyx || joyy[0] != pjoyy || tmapmode == TMMODE_DRAWN)
-		gmenu_joy(joyx[0], joyy[0]);
-
-	pjoyx = joyx[0]; pjoyy = joyy[0];
-	pjoyb = joyb[0];
-}
-
-__interrupt void irq_lower(void)
-{
-//	vic.color_border = VCOL_GREEN;
-	vspr_update();
-	if (irqphase == IRQP_UPDATE_SPRITE)
-	{
-//		vic.color_border = VCOL_CYAN;
-		rirq_sort();
-	}
-
-	if (irqphase == IRQP_USER_INPUT)
-	{
-		irqphase = IRQP_MOVE_DIGGER;
-		irqcount++;
-	}
-	else
-		irqphase++;
-//	vic.color_border = VCOL_BLACK;
-
-	vic.spr_priority = 0x00;
-}
-
-__interrupt void irq_upper(void)
-{
-	music_play();
-	
-	switch(irqphase)
-	{
-	case IRQP_MOVE_DIGGER:
-//		vic.color_border = VCOL_RED;
-		diggers_move();
-		break;
-	case IRQP_MOVE_ENEMY:
-		break;
-	case IRQP_UPDATE_SPRITE:
-//		vic.color_border = VCOL_YELLOW;
-		{
-			char si = diggers_sprites(0, mapx, mapy);
-
-			while (si < 16)
-			{
-				vspr_move(si, 0, 255);
-				si++;
-			}
-		}
-
-//		vic.color_border = VCOL_CYAN;
-		vspr_sort();
-		break;
-	case IRQP_USER_INPUT:
-		user_interaction();
-		break;
-	}
-
-//	vic.color_border = VCOL_BLACK;
-}
-
 void status_mapview(void)
 {
 	statusview = STVIEW_MINIMAP;
@@ -171,25 +80,7 @@ int main(void)
 
 	diggers_init();
 
-	rirq_build(&rirqlow, 1);
-	rirq_call(&rirqlow, 0, irq_lower);
-	rirq_set(8, 250, &rirqlow);
-
-	rirq_build(&rirqup, 1);
-	rirq_call(&rirqup, 0, irq_upper);
-	rirq_set(9, 10, &rirqup);
-
-	rirq_build(&rirqmenu, 1);
-	rirq_write(&rirqmenu, 0, &vic.spr_priority, 0xff);
-	rirq_set(10, 241, &rirqmenu);
-
-	vspr_sort();
-	vspr_update();
-	rirq_sort();
-
-	// start raster IRQ processing
-
-	rirq_start();
+	gameirq_init();
 
 	gmenu_init();
 
@@ -198,13 +89,18 @@ int main(void)
 	rooms_count();
 
 	res_stored[RES_METAL] = 16;
-	res_stored[RES_CARBON] = 16;
 	res_stored[RES_WATER] = 16;
+	rooms_researched = RTILE_LABORATORY + 1;
+	researching = 16;
 
 	statusview = STVIEW_MINIMAP;
 	minimap_highlight(mapx, mapy);			
 	
 	char	rescount = irqcount;
+	char	pirqcount = irqcount;
+
+	tmapx = 8; tmapy = 0;
+	cursorx = 8; cursory = 0;
 
 	music_init(TUNE_THEME_GENERAL_1);
 
@@ -239,7 +135,14 @@ int main(void)
 			rooms_count();				
 			if (statusview == STVIEW_BUILD)
 				rooms_display();
-			buildingchanged = false;			
+			buildingchanged = false;
+		}
+		else if (researching == 0)
+		{
+			researching	= 1 << rooms_researched;
+			rooms_researched++;
+			if (statusview == STVIEW_BUILD)
+				rooms_display();
 		}
 		else if (gmenu != GMENU_NONE)
 		{
@@ -308,6 +211,7 @@ int main(void)
 					diggers[diggeri].task = DTASK_GUARD;
 					diggers[diggeri].target = cursorx + 16 * cursory;
 				}
+				status_mapview();
 				break;
 			case GMENU_BUILD:
 				if (statusview == STVIEW_BUILD)
@@ -329,7 +233,7 @@ int main(void)
 			gmenu = GMENU_NONE;
 		}
 		else
-		{
+		{			
 			while ((char)(irqcount - rescount) >= 3)
 			{
 				res_update();
@@ -344,6 +248,10 @@ int main(void)
 
 			if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2)
 				digger_procreate();
+
+			while (pirqcount == irqcount)
+				;
+			pirqcount = irqcount;
 		}
 
 	}

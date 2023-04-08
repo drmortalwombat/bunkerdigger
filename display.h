@@ -3,7 +3,7 @@
 
 #include <c64/vic.h>
 
-static char * const Screen	=	(char *)0xc000;
+static char * const Screen	=	(char *)0xcc00;
 static char * const Color	=	(char *)0xd800; 
 static char * const Sprites =  (char *)0xd000;
 static char * const Hires	=	(char *)0xe000;
@@ -22,7 +22,7 @@ void disp_space(char x, char y, char n, char back, char color);
 
 void disp_bar(char x, char y, char w, char back, char color);
 
-void disp_rbar(char x, char y, char w, char total, char color);
+void disp_rbar(char x, char y, char w, char total, char area, char color);
 
 void disp_vbar(char x, char y, char h, char back, char color);
 

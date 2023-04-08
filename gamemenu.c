@@ -16,14 +16,14 @@ bool buildingchanged;
 StatusView	statusview;
 
 static const char * gamemenutexts[] = {
-	S"_MAP ", S"_TEAM", S"_RSRC", S"_DIG ", S"_BULD", S"_ASGN", S"_GARD"
+	S"_MAP ", S"_TEAM", S"_DIG ", S"_BULD", S"_ASGN", S"_GARD"
 };
 
 void gmenu_init(void)
 {
 	memset(Hires + 24 * 320, 0xff, 320);
 
-	for(char x=0; x<7; x++)
+	for(char x=0; x<6; x++)
 	{
 		disp_menu(5 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	}
@@ -53,18 +53,15 @@ void gmenu_push(void)
 			gmenu = GMENU_TEAM;
 			break;
 		case 2:
-			gmenu = GMENU_RSRC;
-			break;
-		case 3:
 			gmenu = GMENU_DIG;
 			break;
-		case 4:
+		case 3:
 			gmenu = GMENU_BUILD;
 			break;
-		case 5:
+		case 4:
 			gmenu = GMENU_ASSIGN;
 			break;
-		case 6:
+		case 5:
 			gmenu = GMENU_GUARD;
 			break;
 		}
@@ -75,7 +72,7 @@ void gmenu_nav(signed char dx)
 {
 	if (dx < 0 && gmenux > 0)
 		gmenu_set(gmenux - 1);
-	else if (dx > 0 && gmenux < 6)
+	else if (dx > 0 && gmenux < 5)
 		gmenu_set(gmenux + 1);
 }
 
@@ -91,24 +88,20 @@ void gmenu_key(char keyb)
 		gmenu_set(1);
 		gmenu_push();
 		break;
-	case KSCAN_R:
+	case KSCAN_D:
 		gmenu_set(2);
 		gmenu_push();
 		break;
-	case KSCAN_D:
+	case KSCAN_B:
 		gmenu_set(3);
 		gmenu_push();
 		break;
-	case KSCAN_B:
+	case KSCAN_A:
 		gmenu_set(4);
 		gmenu_push();
 		break;
-	case KSCAN_A:
-		gmenu_set(5);
-		gmenu_push();
-		break;
 	case KSCAN_G:
-		gmenu_set(6);
+		gmenu_set(5);
 		gmenu_push();
 		break;
 	case KSCAN_CSR_RIGHT:
@@ -122,6 +115,10 @@ void gmenu_key(char keyb)
 		break;
 	case KSCAN_CSR_DOWN | KSCAN_QUAL_SHIFT:
 		gmenu_joy(0, -1);
+		break;
+	case KSCAN_SPACE:
+	case KSCAN_RETURN:
+		gmenu_push();
 		break;
 	}
 }
@@ -146,7 +143,7 @@ void gmenu_joy(signed char dx, signed char dy)
 			{
 				if (tmapmode == TMMODE_CURSOR)
 				{
-					tile_cursor(cursorx - mapx, cursory - mapy);
+					tile_cursor_hide(cursorx - mapx, cursory - mapy);
 					tmapmode = TMMODE_DRAWN;
 				}
 
@@ -168,7 +165,7 @@ void gmenu_joy(signed char dx, signed char dy)
 				tmapmode = TMMODE_REDRAW;
 			else if (tmapmode == TMMODE_DRAWN)
 			{
-				tile_cursor(cursorx - mapx, cursory - mapy);
+				tile_cursor_show(cursorx - mapx, cursory - mapy);
 				tmapmode = TMMODE_CURSOR;
 			}			
 		}
@@ -240,7 +237,7 @@ void gmenu_joy(signed char dx, signed char dy)
 		}
 		else if (dy > 0)
 		{
-			if (bi < 15)
+			if (bi + 1 < rooms_researched)
 			{
 //				do
 //				{

@@ -21,6 +21,8 @@ extern char room_count[16];
 
 extern Construction			room_constructions[4];
 extern char					room_num_construction;
+extern char					rooms_researched;
+extern unsigned				researching;
 
 void rooms_display(void);
 

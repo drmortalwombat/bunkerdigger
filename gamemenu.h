@@ -8,7 +8,6 @@ enum GameMenu
 
 	GMENU_MAP,
 	GMENU_TEAM,
-	GMENU_RSRC,
 
 	GMENU_DIG,
 	GMENU_BUILD,

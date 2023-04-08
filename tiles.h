@@ -13,6 +13,7 @@
 #define TF_LR		TF_LEFT | TF_RIGHT
 
 #define TILE_FLOOR	0x03
+#define TILE_ROOMS	0x10
 
 extern const char TileFlags[];
 
@@ -29,14 +30,14 @@ enum TileMapMode
 enum RoomTile
 {
 	RTILE_QUARTERS,
-	RTILE_HYDRO,
-	RTILE_MINE,
-	RTILE_VENTILATION,
-
-	RTILE_GENERATOR,
 	RTILE_WORKBENCH,
+	RTILE_HYDRO,
+	RTILE_GENERATOR,
+
+	RTILE_MINE,
+	RTILE_STORAGE,
 	RTILE_LABORATORY,
-	RTILE_CENTRIFUGE,
+	RTILE_VENTILATION,
 
 	RTILE_GYM,
 	RTILE_ARMOURY,
@@ -44,7 +45,7 @@ enum RoomTile
 	RTILE_STUDY,
 
 	RTILE_EXCAVATOR,
-	RTILE_STORAGE,
+	RTILE_CENTRIFUGE,
 	RTILE_RADIO,
 	
 	RTILE_LAUNCH_TOP,
@@ -80,7 +81,9 @@ void tiles_draw(char sx, char sy);
 
 bool tile_dig(char x, char y);
 
-void tile_cursor(char x, char y);
+void tile_cursor_show(char x, char y);
+
+void tile_cursor_hide(char x, char y);
 
 char tile_plan(char si, char di);
 

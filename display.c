@@ -4,6 +4,8 @@ const char FontHiresData[] = {
 	#embed ctm_chars "colorfont.ctm"
 };
 
+#pragma align(FontHiresData, 256)
+
 __striped char * const HiresRow[25] = {
 	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320, Hires +  4 * 320,
 	Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320, Hires +  8 * 320, Hires +  9 * 320,
@@ -80,12 +82,13 @@ void disp_vbar(char x, char y, char h, char back, char color)
 	cp[0] = color;
 }
 
-void disp_rbar(char x, char y, char w, char total, char color)
+void disp_rbar(char x, char y, char w, char total, char area, char color)
 {
 	__assume(y < 25);
 	__assume(x < 40);
 
 	total >>= 2;
+	area >>= 2;
 
 	char * sp = Screen + 40 * y + x;
 	for(char c=0; c<total; c++)
@@ -128,6 +131,14 @@ void disp_rbar(char x, char y, char w, char total, char color)
 			i ++;
 		}	
 	}
+
+	while (i < area)
+	{
+		for(char j=0; j<8; j++)
+			hp[j] = 0x00;
+		hp += 8;		
+		i ++;
+	}	
 }
 
 void disp_bar(char x, char y, char w, char back, char color)

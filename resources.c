@@ -12,7 +12,7 @@ void res_generate(char di)
 	char tile = BunkerMapData[ti];
 	if (TileFlags[tile] & TF_ROOM)
 	{
-		RoomTile	rt = tile - 16;
+		RoomTile	rt = tile - TILE_ROOMS;
 		switch (rt)
 		{
 		case RTILE_HYDRO:
@@ -28,7 +28,10 @@ void res_generate(char di)
 			res_stored[RES_BUILDING] += diggers[di].ability;
 			break;
 		case RTILE_LABORATORY:
-			res_stored[RES_RESEARCH] += diggers[di].intelligence;
+			if (researching > diggers[di].intelligence)
+				researching -= diggers[di].intelligence;
+			else
+				researching = 0;
 			break;
 		case RTILE_GYM:
 			if (diggers[di].ability < DIGGER_MAX_SKILL)
@@ -66,27 +69,28 @@ void res_generate(char di)
 			}
 			break;
 		case RTILE_MINE:
-			if (TileMapFlags[ti] & GROUND_TYPE_RESOURCE)
+			switch(TileMapFlags[ti] & GROUND_TYPE_MASK)
 			{
-				switch(TileMapFlags[ti] & GROUND_TYPE_MASK)
-				{
-				case GTYPE_METAL:
-					res_stored[RES_METAL] += diggers[di].ability;
-					break;
-				case GTYPE_CARBON:
-					res_stored[RES_CARBON] += diggers[di].ability;
-					break;
-				case GTYPE_URANIUM:
-					res_stored[RES_URANIUM] += diggers[di].ability;
-					break;
-				}
-				TileMapFlags[ti] -= 0x08;
-				if (!(TileMapFlags[ti] & GROUND_TYPE_RESOURCE))
-				{
-					TileMapFlags[ti] = GTYPE_SOIL;
-					tmapmode = TMMODE_REDRAW;
-				}
+			case GTYPE_METAL:
+				res_stored[RES_METAL] += diggers[di].ability;
+				break;
+			case GTYPE_CARBON:
+				res_stored[RES_CARBON] += diggers[di].ability;
+				break;
+			case GTYPE_URANIUM:
+				res_stored[RES_URANIUM] += diggers[di].ability;
+				break;
+			default:
+				return;
 			}
+
+			if (TileMapFlags[ti] < 0x08)
+			{
+				TileMapFlags[ti] = GTYPE_SOIL;
+				tmapmode = TMMODE_REDRAW;
+			}
+			else
+				TileMapFlags[ti] -= 0x08;			
 			break;
 		}
 	}
@@ -94,6 +98,7 @@ void res_generate(char di)
 
 char digger_heal;
 char digger_water_index;
+char res_update_cnt;
 
 void res_init(void)
 {
@@ -108,12 +113,13 @@ void res_update(void)
 	char	production = 4;
 
 	res_oxygen[0] = DIGGER_MAX_AIR;
-	res_oxygen[1] += 16;
-	res_oxygen[2] += 8;
-	res_oxygen[3] += 4;
-	res_oxygen[4] += 2;
-	res_oxygen[5] += 1;
-	res_stored[RES_ENERGY] += 1;
+	res_oxygen[1] += 8;
+	res_oxygen[2] += 4;
+	res_oxygen[3] += 2;
+	res_oxygen[4] += 1;
+
+	if (!(digger_water_index & 15))
+		res_stored[RES_ENERGY] += 1;
 
 	char heal = 0;
 
@@ -137,17 +143,24 @@ void res_update(void)
 		}
 	}
 
-	if (diggers[digger_water_index].state != DS_FREE)
+	res_update_cnt++;
+	if (res_stored[RES_METAL] < 4 && (res_update_cnt & 0x7f) == 0)
+		res_stored[RES_METAL]++;
+
+	for(char i=0; i<2; i++)
 	{
-		if (res_stored[RES_WATER] > 0)
-			res_stored[RES_WATER]--;
-		else if (diggers[digger_water_index].health > 0)
+		if (diggers[digger_water_index].state != DS_FREE)
 		{
-			diggers[digger_water_index].health--;			
-			diggerchanged = true;
+			if (res_stored[RES_WATER] > 0)
+				res_stored[RES_WATER]--;
+			else if (diggers[digger_water_index].health > 0)
+			{
+				diggers[digger_water_index].health--;			
+				diggerchanged = true;
+			}
 		}
+		digger_water_index = (digger_water_index + 1) & 31;
 	}
-	digger_water_index = (digger_water_index + 1) & 31;
 
 	for(char i=0; i<32; i++)
 	{		
@@ -195,7 +208,7 @@ void res_display(void)
 	for(char i=0; i<8; i++)
 	{
 		disp_char(24 + 8 * (i >> 2), 16 + (i & 3) , resletters[i], 0x00, 0xf1);
-		disp_rbar(25 + 8 * (i >> 2), 16 + (i & 3), res_stored[i] >> 2, res_storage[i] >> 2, rescolors[i]);
+		disp_rbar(25 + 8 * (i >> 2), 16 + (i & 3), res_stored[i] >> 2, res_storage[i] >> 2, MAX_STORAGE >> 2, rescolors[i]);
 	}
 	disp_char(24, 20, 'A', 0x00, 0xf1);
 	for(char i=0; i<15; i++)

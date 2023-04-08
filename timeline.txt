@@ -1,10 +1,43 @@
 
-01:00 Build Water works
-02:00 Build resource mine for carbon
+// Buildings and resources
+//  Quarters -> Diggers
+//  Workbench(Digger, Energy) -> Building
+//  Hydro(Digger, Energy) -> Water
+//  Generator(Digger) -> Energy
+//  Radio station(Digger, Energy) -> Messages / Specialists
+//  Mines(Digger, Energy) -> Metal, Carbon, Uranium
+//  Missilebase(Digger, Energy, Metal) -> Missile
+//  Research Lab(Digger, Energy) -> Building plans
+//  Ventilation(Digger) -> Oxygen
+//  Sickbay(Digger) -> Health
+//  Storage() -> Storage Space
+//  Gym(Digger) -> Improve agility
+//  Armoury(Digger) -> Improve 
+//  Study(Digger) -> Intelligence
+//  Centrifuge(Uranium) -> Warhead
+
+
+Diggers require Quarters, Water and Oxygen, if not enough, health deteriorates
+
+Stumble stones:
+
+- Running out of water
+- Running out of energy
+- Running out of metal
+- Running out of diggers
+- Need carbon for research lab
+- Running out of mines
+
+
+
+01:00 Build hydro
+01:30 Build generator
+02:30 Build additional quarters
+02:00 Build resource mine for metal
+02:30 Build additional storage room
+03:00 Build resource mine for carbon
 03:00 Build research lab
 03:30 Start Researching
-04:00 Build resource mine for metal
-04:30 Build additional storage room
 
 #05:00 Running out of resources from start store
 
@@ -25,3 +58,23 @@
 #35:00 Bunker destroyed by rocket from moon
 40:00 Launch rocket to mars
 #45:00 Earth destroyed by meteors from moon
+
+  0123456789abcdef
+0 ........wq....M.
+1 ..............M.
+2 ...........mm.M.
+3 ..c........mm.M.
+4 #####.c.##....M.
+5 .cc.####........
+6 ...........#####
+7 .mm..........mm.
+8 .mm.######......
+9 #####....##.ccc.
+a ..........######
+b ................
+c ..###.##........
+d ......###.......
+e ................
+f .............###
+
+
