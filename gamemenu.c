@@ -16,14 +16,14 @@ bool buildingchanged;
 StatusView	statusview;
 
 static const char * gamemenutexts[] = {
-	S"_MAP ", S"_TEAM", S"_DIG ", S"_BULD", S"_ASGN", S"_GARD"
+	S"_MAP ", S"_TEAM", S"_DIG ", S"_BULD", S"_ASGN", S"_GARD", S"_SAVE"
 };
 
 void gmenu_init(void)
 {
 	memset(Hires + 24 * 320, 0xff, 320);
 
-	for(char x=0; x<6; x++)
+	for(char x=0; x<7; x++)
 	{
 		disp_menu(5 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	}
@@ -63,6 +63,9 @@ void gmenu_push(void)
 			break;
 		case 5:
 			gmenu = GMENU_GUARD;
+			break;
+		case 6:
+			gmenu = GMENU_SAVE;
 			break;
 		}
 	}
@@ -104,6 +107,10 @@ void gmenu_key(char keyb)
 		gmenu_set(5);
 		gmenu_push();
 		break;
+	case KSCAN_S:
+		gmenu_set(6);
+		gmenu_push();
+		break;
 	case KSCAN_CSR_RIGHT:
 		gmenu_joy(1, 0);
 		break;
@@ -127,18 +134,23 @@ void gmenu_joy(signed char dx, signed char dy)
 {
 	if (statusview == STVIEW_MINIMAP)
 	{
-		if (tmapmode != TMMODE_REDRAW)
-		{
-			char	cx = cursorx, cy = cursory;
-			if (dx < 0 && cx > 0)
-				cx--;
-			else if (dx > 0 && cx < 15)
-				cx++;
-			if (dy < 0 && cy > 0)
-				cy--;
-			else if (dy > 0 && cy < 15)
-				cy++;
+		char	cx = cursorx, cy = cursory;
+		if (dx < 0 && cx > 0)
+			cx--;
+		else if (dx > 0 && cx < 15)
+			cx++;
+		if (dy < 0 && cy > 0)
+			cy--;
+		else if (dy > 0 && cy < 15)
+			cy++;
 
+		if (tmapmode == TMMODE_REDRAW)
+		{
+			cursorx = cx;
+			cursory = cy;
+		}
+		else
+		{
 			if (cx != cursorx || cy != cursory)
 			{
 				if (tmapmode == TMMODE_CURSOR)
@@ -149,17 +161,17 @@ void gmenu_joy(signed char dx, signed char dy)
 
 				cursorx = cx;
 				cursory = cy;
-
-				if (mapx > cursorx)
-					tmapx = cursorx;
-				else if (mapx + 2 < cursorx)
-					tmapx = cursorx - 2;
-
-				if (mapy > cursory)
-					tmapy = cursory;
-				else if (mapy + 2 < cursory)
-					tmapy = cursory - 2;
 			}
+
+			if (mapx > cursorx)
+				tmapx = cursorx;
+			else if (mapx + 2 < cursorx)
+				tmapx = cursorx - 2;
+
+			if (mapy > cursory)
+				tmapy = cursory;
+			else if (mapy + 2 < cursory)
+				tmapy = cursory - 2;
 
 			if (tmapx != mapx || tmapy != mapy)
 				tmapmode = TMMODE_REDRAW;

@@ -60,7 +60,7 @@ void res_generate(char di)
 		case RTILE_VENTILATION:
 			{
 				char y = diggers[di].ty;
-				char a = diggers[di].ability;
+				char a = diggers[di].ability + 3;
 				if (y > 0)
 					res_oxygen[y-1] += a;
 				res_oxygen[y] += 2 * a;
@@ -99,6 +99,7 @@ void res_generate(char di)
 char digger_heal;
 char digger_water_index;
 char res_update_cnt;
+char digger_shuffle_mask;
 
 void res_init(void)
 {
@@ -118,7 +119,7 @@ void res_update(void)
 	res_oxygen[3] += 2;
 	res_oxygen[4] += 1;
 
-	if (!(digger_water_index & 15))
+	if (!(res_update_cnt & 15))
 		res_stored[RES_ENERGY] += 1;
 
 	char heal = 0;
@@ -144,18 +145,26 @@ void res_update(void)
 	}
 
 	res_update_cnt++;
-	if (res_stored[RES_METAL] < 4 && (res_update_cnt & 0x7f) == 0)
+	if (res_stored[RES_METAL] < 4 && (res_update_cnt & 0x7f) == 0x29)
 		res_stored[RES_METAL]++;
+	if (res_stored[RES_HEALING] == 0 && (res_update_cnt & 0x3f) == 0x04)
+		res_stored[RES_HEALING] = 1;
+
+	// Shuffle diggers a little so the dehydration is more
+	// evenly distributed
+	if (!(res_update_cnt & 15))
+		digger_shuffle_mask = rand() & 31;
 
 	for(char i=0; i<2; i++)
 	{
-		if (diggers[digger_water_index].state != DS_FREE)
+		char j = digger_water_index ^ digger_shuffle_mask;
+		if (diggers[j].state != DS_FREE)
 		{
 			if (res_stored[RES_WATER] > 0)
 				res_stored[RES_WATER]--;
-			else if (diggers[digger_water_index].health > 0)
+			else if (diggers[j].health > 0)
 			{
-				diggers[digger_water_index].health--;			
+				diggers[j].health--;			
 				diggerchanged = true;
 			}
 		}

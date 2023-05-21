@@ -190,6 +190,8 @@ bool tile_dig(char x, char y)
 	if (TileMapFlags[16 * y + x] == GTYPE_ROCK && !room_count[RTILE_EXCAVATOR])
 		return false;
 
+	if (tile_is_bunker(x, y) || tile_is_room(x, y))
+		return false;
 
 	char	flags = TF_BUNKER;
 	if (x > 0 && tile_is_bunker(x - 1, y))
@@ -212,17 +214,21 @@ bool tile_dig(char x, char y)
 			flags |= TF_DOWN;
 	}
 
-	tile_expand(x, y, flags);
-	if (flags & TF_LEFT)
-		tile_expand(x - 1, y, TF_RIGHT);
-	if (flags & TF_RIGHT)
-		tile_expand(x + 1, y, TF_LEFT);
-	if (flags & TF_UP)
-		tile_expand(x, y - 1, TF_DOWN);
-	if (flags & TF_DOWN)
-		tile_expand(x, y + 1, TF_UP);
+	if (tile_expand(x, y, flags))
+	{
+		if (flags & TF_LEFT)
+			tile_expand(x - 1, y, TF_RIGHT);
+		if (flags & TF_RIGHT)
+			tile_expand(x + 1, y, TF_LEFT);
+		if (flags & TF_UP)
+			tile_expand(x, y - 1, TF_DOWN);
+		if (flags & TF_DOWN)
+			tile_expand(x, y + 1, TF_UP);
 
-	return true;
+		return true;
+	}
+	else
+		return false;
 }
 
 static char tile_ground_color[] = {

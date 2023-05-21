@@ -538,7 +538,7 @@ bool digger_work(char di)
 				if (res_stored[RES_ENERGY])
 				{
 					res_stored[RES_ENERGY]--;
-					diggers[di].count = 4;
+					diggers[di].count = 2;
 					diggers[di].state = DS_WORKING;
 					return true;
 				}

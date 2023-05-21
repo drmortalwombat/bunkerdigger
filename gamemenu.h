@@ -12,7 +12,9 @@ enum GameMenu
 	GMENU_DIG,
 	GMENU_BUILD,
 	GMENU_ASSIGN,
-	GMENU_GUARD
+	GMENU_GUARD,
+
+	GMENU_SAVE
 };
 
 extern GameMenu	gmenu;
