@@ -1,6 +1,7 @@
 #ifndef MINIMAP_H
 #define MINIMAP_H
 
+extern char * const MinimapHiresTab[16];
 
 void minimap_draw(void);
 

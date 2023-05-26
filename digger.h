@@ -54,6 +54,8 @@ void diggers_vacate_room(char ri);
 
 char diggers_sprites(char si, char sx, char sy);
 
+void diggers_minimap(void);
+
 void diggers_list(void);
 
 void digger_stats(void);

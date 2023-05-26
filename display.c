@@ -91,8 +91,12 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	area >>= 2;
 
 	char * sp = Screen + 40 * y + x;
+	char * cp = Color + 40 * y + x;
 	for(char c=0; c<total; c++)
+	{
 		sp[c] = color;
+		cp[c] = 1;
+	}
 
 	char * hp = HiresRow[y] + x * 8;
 
@@ -105,9 +109,11 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	while (i < w)
 	{
 		hp[0] = 0x00;
-		for(char j=1; j<7; j++)
+		for(char j=1; j<6; j++)
 			hp[j] = 0xaa;
+		hp[6] = 0xa2;
 		hp[7] = 0x00;
+		hp[2] = 0xff;
 		hp += 8;		
 		i ++;
 	}
@@ -115,18 +121,22 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	if (i < total)
 	{
 		hp[0] = 0x00;
-		for(char j=1; j<7; j++)
+		for(char j=1; j<6; j++)
 			hp[j] = m;
+		hp[6] = m & 0xf3;
 		hp[7] = 0x00;
+		hp[2] = 0xff;
 		hp += 8;		
 		i ++;
 
 		while (i < total)
 		{
 			hp[0] = 0x00;
-			for(char j=1; j<7; j++)
+			for(char j=1; j<6; j++)
 				hp[j] = 0x55;
+			hp[6] = 0x51;
 			hp[7] = 0x00;
+			hp[2] = 0xff;
 			hp += 8;		
 			i ++;
 		}	

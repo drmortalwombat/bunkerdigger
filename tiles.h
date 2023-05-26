@@ -14,6 +14,7 @@
 
 #define TILE_FLOOR	0x03
 #define TILE_ROOMS	0x10
+#define TILE_GROUND	0x28
 
 extern const char TileFlags[];
 

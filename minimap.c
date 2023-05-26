@@ -5,6 +5,28 @@ const char MinimapHiresData[] = {
 	#embed ctm_chars "minimap.ctm"
 };
 
+char * const MinimapHiresTab[16] = {
+	Hires + 24 * 8 + 0 * 320,
+	Hires + 24 * 8 + 1 * 320,
+	Hires + 24 * 8 + 2 * 320,
+	Hires + 24 * 8 + 3 * 320,
+
+	Hires + 24 * 8 + 4 * 320,
+	Hires + 24 * 8 + 5 * 320,
+	Hires + 24 * 8 + 6 * 320,
+	Hires + 24 * 8 + 7 * 320,
+
+	Hires + 24 * 8 + 8 * 320,
+	Hires + 24 * 8 + 9 * 320,
+	Hires + 24 * 8 + 10 * 320,
+	Hires + 24 * 8 + 11 * 320,
+
+	Hires + 24 * 8 + 12 * 320,
+	Hires + 24 * 8 + 13 * 320,
+	Hires + 24 * 8 + 14 * 320,
+	Hires + 24 * 8 + 15 * 320
+};
+
 void minimap_draw(void)
 {
 	for(char y=0; y<16; y++)

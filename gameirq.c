@@ -64,7 +64,7 @@ __interrupt void irq_upper(void)
 	switch(irqphase)
 	{
 	case IRQP_MOVE_DIGGER:
-//		vic.color_border = VCOL_RED;
+//		vic.color_border = VCOL_YELLOW;
 		diggers_move();
 		break;
 	case IRQP_MOVE_ENEMY:

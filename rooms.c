@@ -15,7 +15,7 @@ const RoomInfo		room_infos[16] = {
 	{4, 0, 0},
 
 	{2, 3, 0},
-	{4, 1, 0},
+	{4, 6, 0},
 	{2, 3, 0},
 	{1, 4, 0},
 
@@ -139,11 +139,12 @@ bool rooms_build(void)
 		char	ti = cursorx + 16 * cursory;
 
 		char 	tile = BunkerMapData[ti];
-		if (tile >= TILE_ROOMS)
+#if 0
+		if (tile >= TILE_ROOMS && tile < TILE_GROUND)
 		{
 			tile = TILE_FLOOR;
 		}
-
+#endif
 		if (tile == TILE_FLOOR)
 		{
 			res_stored[RES_METAL] -= 4 * room_infos[buildingi].res_metal;

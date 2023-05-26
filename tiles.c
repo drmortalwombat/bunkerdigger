@@ -110,10 +110,13 @@ struct tile_strata
 	{GTYPE_METAL  | 0xf8,  13,  7, 2, 1},	 
 	{GTYPE_METAL  | 0xf8,   1,  8, 2, 1},	 
 
-	{GTYPE_CARBON | 0x70,   2,  3, 1, 1},	 
-	{GTYPE_CARBON | 0x70,   6,  4, 1, 1},	 
-	{GTYPE_CARBON | 0x70,   1,  5, 2, 1},	 
-	{GTYPE_CARBON | 0x70,  12,  9, 3, 1},	 
+	{GTYPE_CARBON | 0x78,   2,  3, 1, 1},	 
+	{GTYPE_CARBON | 0x78,   6,  4, 1, 1},	 
+	{GTYPE_CARBON | 0x78,   1,  5, 2, 1},	 
+	{GTYPE_CARBON | 0x78,  12,  9, 3, 1},	 
+
+	{GTYPE_CARBON | 0x78,  12, 11, 3, 1},	 
+	{GTYPE_CARBON | 0x78,   6, 14, 3, 1},	 
 };
 
 

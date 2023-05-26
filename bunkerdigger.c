@@ -217,7 +217,7 @@ int main(void)
 		else if (researching == 0)
 		{
 			rooms_researched++;
-			researching = 6 << (rooms_researched - RTILE_LABORATORY);
+			researching = 4 + (2 << (rooms_researched - RTILE_LABORATORY));
 
 			if (statusview == STVIEW_BUILD)
 				rooms_display();

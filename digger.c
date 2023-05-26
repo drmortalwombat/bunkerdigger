@@ -1,6 +1,8 @@
 #include "digger.h"
 #include "tiles.h"
 #include "resources.h"
+#include "display.h"
+#include "minimap.h"
 #include <c64/sprites.h>
 
 extern __striped Digger	diggers[32];
@@ -116,6 +118,24 @@ void diggers_move(void)
 {
 	for(char i=0; i<32; i++)
 	{	
+		if (diggers[i].state != DS_FREE)
+		{
+			char dx = diggers[i].tx;
+			char dy = diggers[i].ty;
+			char sx = diggers[i].sx >> 2;
+			char sy = diggers[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+
+			char m = ~(0xc0 >> 2 * sx);
+			dp[0] &= m;
+			dp[1] &= m;
+		}
+
 		switch(diggers[i].state)
 		{
 		case DS_MOVE_RIGHT:
@@ -221,6 +241,24 @@ void diggers_move(void)
 			diggers[i].mi = 65;
 			break;
 		}
+
+		if (diggers[i].state != DS_FREE)
+		{
+			char dx = diggers[i].tx;
+			char dy = diggers[i].ty;
+			char sx = diggers[i].sx >> 2;
+			char sy = diggers[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+
+			char m = 0x55 & (0xc0 >> 2 * sx);
+			dp[0] |= m;
+			dp[1] |= m;
+		}		
 	}
 }
 
@@ -383,6 +421,54 @@ char diggers_sprites(char si, char sx, char sy)
 	return si;
 }
 
+void diggers_minimap_hide(void)
+{
+	for(char i=0; i<32; i++)
+	{	
+		if (diggers[i].state != DS_FREE)
+		{
+			char dx = diggers[i].tx;
+			char dy = diggers[i].ty;
+			char sx = diggers[i].sx >> 2;
+			char sy = diggers[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+
+			char m = ~(0xc0 >> 2 * sx);
+			dp[0] &= m;
+			dp[1] &= m;
+		}
+	}
+}
+
+void diggers_minimap_show(void)
+{
+	for(char i=0; i<32; i++)
+	{	
+		if (diggers[i].state != DS_FREE)
+		{
+			char dx = diggers[i].tx;
+			char dy = diggers[i].ty;
+			char sx = diggers[i].sx >> 2;
+			char sy = diggers[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+
+			char m = 0x55 & (0xc0 >> 2 * sx);
+			dp[0] |= m;
+			dp[1] |= m;
+		}
+	}
+}
+
 void diggers_vacate_room(char ri)
 {
 	for(char i=0; i<32; i++)
@@ -414,7 +500,7 @@ void diggers_list(void)
 
 			disp_char(x + 0, y, ' ', c, VCOL_BLACK);
 			disp_char(x + 1, y, digger_task_char[diggers[i].task], c, VCOL_WHITE + 16 * VCOL_LT_GREY);
-			disp_vbar(x + 2, y, 8 - ((diggers[i].health + 7) >> 3), c + 16 * VCOL_LT_GREY, VCOL_WHITE);
+			disp_vbar(x + 2, y, 8 - ((diggers[i].health + 7) >> 3), c + 16 * VCOL_LT_GREY, VCOL_LT_RED);
 			disp_chars(x + 3, y, digger_names + i * 5, 5, c, diggers[i].color + 16 * VCOL_DARK_GREY);
 			disp_char(x + 7, y, ' ', c, VCOL_BLACK);
 		}
@@ -432,7 +518,7 @@ void digger_stats(void)
 	disp_char(25, 21, ' ', VCOL_BLACK, VCOL_BLACK);
 	disp_chars(26, 21, digger_names + diggeri * 5, 5, VCOL_BLACK, diggers[diggeri].color + 16 * VCOL_DARK_GREY);
 
-	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, 32, VCOL_WHITE + 16 * VCOL_DARK_GREY);
+	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, 32, VCOL_LT_RED + 16 * VCOL_DARK_GREY);
 
 	disp_char(24, 22 , 'A', 0x00, 0xf1);
 	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_DARK_GREY);
@@ -538,7 +624,7 @@ bool digger_work(char di)
 				if (res_stored[RES_ENERGY])
 				{
 					res_stored[RES_ENERGY]--;
-					diggers[di].count = 2;
+					diggers[di].count = 4;
 					diggers[di].state = DS_WORKING;
 					return true;
 				}
