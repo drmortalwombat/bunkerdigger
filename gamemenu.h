@@ -14,6 +14,7 @@ enum GameMenu
 	GMENU_ASSIGN,
 	GMENU_GUARD,
 
+	GMENU_HISTORY,
 	GMENU_SAVE
 };
 

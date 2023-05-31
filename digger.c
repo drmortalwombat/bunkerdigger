@@ -3,6 +3,8 @@
 #include "resources.h"
 #include "display.h"
 #include "minimap.h"
+#include "gamemenu.h"
+#include "messages.h"
 #include <c64/sprites.h>
 
 extern __striped Digger	diggers[32];
@@ -14,11 +16,10 @@ static const char digger_task_char[] = {
 char diggers_born;
 
 const char digger_names[] = 
-	"MIKE JIM  JOE  CARL CLIFFMARK BILL ANDY "
-	"ALEX FRED CHRISBOB  TIM  TOM  JAMESSIMON"
-	"JILL JANE LISA MONA TILLYSUSANMARTHBETH "
-	"LINDAANNA MARIAJUDY MINA OLGA TONIAKIM  ";
-
+	"MIKE JILL JIM  JANE JOE  CARL CLIFFLISA "
+	"MONA MARK BILL ANDY TILLYSUSANMARTHBETH "
+	"ALEX FRED MARIAJUDY MINA CHRISBOB  TIM  "
+	"TOM  TONIAKIM  JAMESSIMONLINDAANNA OLGA ";
 
 void diggers_init(void)
 {
@@ -118,7 +119,7 @@ void diggers_move(void)
 {
 	for(char i=0; i<32; i++)
 	{	
-		if (diggers[i].state != DS_FREE)
+		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE)
 		{
 			char dx = diggers[i].tx;
 			char dy = diggers[i].ty;
@@ -242,7 +243,7 @@ void diggers_move(void)
 			break;
 		}
 
-		if (diggers[i].state != DS_FREE)
+		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE)
 		{
 			char dx = diggers[i].tx;
 			char dy = diggers[i].ty;
@@ -382,6 +383,7 @@ void diggers_iterate(void)
 	{	
 		if (diggers[i].state >= DS_IDLE && diggers[i].health == 0)
 		{
+			msg_queue(MSG_DIGGER_KILLED, i);
 			diggers[i].state = DS_DEAD;
 			diggers[i].count = 50;
 			diggers[i].task = DTASK_DEAD;
@@ -597,25 +599,26 @@ bool digger_work(char di)
 					return false;
 
 			case RTILE_GYM:
-				diggers[di].count = 50 * (1 + (diggers[di].ability >> 2));
+				diggers[di].count = 50 * (1 + ((diggers[di].ability + diggers[di].fight + diggers[di].intelligence) >> 2));
 				diggers[di].state = DS_WORKING;
 				return true;
 
 			case RTILE_ARMOURY:
-				diggers[di].count = 50 * (1 + (diggers[di].fight >> 2));
+				diggers[di].count = 50 * (1 + ((diggers[di].ability + diggers[di].fight + diggers[di].intelligence) >> 2));
 				diggers[di].state = DS_WORKING;
 				return true;
 
 			case RTILE_STUDY:
-				diggers[di].count = 50 * (1 + (diggers[di].intelligence >> 2));
+				diggers[di].count = 50 * (1 + ((diggers[di].ability + diggers[di].fight + diggers[di].intelligence) >> 2));
 				diggers[di].state = DS_WORKING;
 				return true;
 
-			case RTILE_EXCAVATOR:
-				if (res_stored[RES_ENERGY])
+			case RTILE_CENTRIFUGE:
+				if (res_stored[RES_ENERGY] >= 8 && res_stored[RES_URANIUM])
 				{
-					res_stored[RES_ENERGY]--;
-					diggers[di].count = 4;
+					res_stored[RES_ENERGY] -= 8;
+					res_stored[RES_URANIUM]--;
+					diggers[di].count = 16;
 					diggers[di].state = DS_WORKING;
 					return true;
 				}
@@ -659,6 +662,8 @@ bool digger_procreate(void)
 			diggers[di].fight = 1;
 			diggers[di].intelligence = 1;
 			diggers[di].health = DIGGER_MAX_HEALTH;
+
+			msg_queue(MSG_DIGGER_DEHYBERNATED, di);
 
 			diggers_born++;
 			diggerchanged = true;

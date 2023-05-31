@@ -106,38 +106,42 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	w >>= 2;	
 
 	char i = 0;
+	char y = 0;
 	while (i < w)
 	{
-		hp[0] = 0x00;
-		for(char j=1; j<6; j++)
-			hp[j] = 0xaa;
-		hp[6] = 0xa2;
-		hp[7] = 0x00;
-		hp[2] = 0xff;
-		hp += 8;		
+		hp[y++] = 0x00;
+		hp[y++] = 0xaa;
+		hp[y++] = 0xff;
+		hp[y++] = 0xaa;
+		hp[y++] = 0xaa;
+		hp[y++] = 0xaa;
+		hp[y++] = 0xa2;
+		hp[y++] = 0x00;
 		i ++;
 	}
 
 	if (i < total)
 	{
-		hp[0] = 0x00;
-		for(char j=1; j<6; j++)
-			hp[j] = m;
-		hp[6] = m & 0xf3;
-		hp[7] = 0x00;
-		hp[2] = 0xff;
-		hp += 8;		
+		hp[y++] = 0x00;
+		hp[y++] = m;
+		hp[y++] = 0xff;
+		hp[y++] = m;
+		hp[y++] = m;
+		hp[y++] = m;
+		hp[y++] = m & 0xf3;
+		hp[y++] = 0x00;
 		i ++;
 
 		while (i < total)
 		{
-			hp[0] = 0x00;
-			for(char j=1; j<6; j++)
-				hp[j] = 0x55;
-			hp[6] = 0x51;
-			hp[7] = 0x00;
-			hp[2] = 0xff;
-			hp += 8;		
+			hp[y++] = 0x00;
+			hp[y++] = 0x55;
+			hp[y++] = 0xff;
+			hp[y++] = 0x55;
+			hp[y++] = 0x55;
+			hp[y++] = 0x55;
+			hp[y++] = 0x51;
+			hp[y++] = 0x00;
 			i ++;
 		}	
 	}
@@ -145,8 +149,7 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	while (i < area)
 	{
 		for(char j=0; j<8; j++)
-			hp[j] = 0x00;
-		hp += 8;		
+			hp[y++] = 0x00;
 		i ++;
 	}	
 }
@@ -303,7 +306,7 @@ void disp_menu(char x, const char * text, char back, char color, char colork)
 	char * cp = Color + 40 * 24 + x;
 
 	char s = 0;
-	for(char i=0; i<4; i++)
+	for(char i=0; i<3; i++)
 	{
 		char c = text[s++];
 		if (c == S'_')
@@ -332,7 +335,7 @@ void disp_menu_color(char x, const char * text, char back, char color, char colo
 	char * cp = Color + 40 * 24 + x;
 
 	char s = 0;
-	for(char i=0; i<4; i++)
+	for(char i=0; i<3; i++)
 	{
 		char c = text[s++];
 		if (c == S'_')

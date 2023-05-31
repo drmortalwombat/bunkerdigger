@@ -19,7 +19,7 @@ void res_generate(char di)
 			res_stored[RES_WATER] += diggers[di].ability;
 			break;
 		case RTILE_GENERATOR:
-			res_stored[RES_ENERGY] += diggers[di].ability;
+			res_stored[RES_ENERGY] += (1 + diggers[di].ability) >> 1;
 			break;
 		case RTILE_SICKBAY:
 			res_stored[RES_HEALING] += diggers[di].intelligence;
@@ -54,8 +54,8 @@ void res_generate(char di)
 				digger_check_color(di);
 			}
 			break;
-		case RTILE_EXCAVATOR:
-			res_stored[RES_DIGGING] += diggers[di].ability;
+		case RTILE_CENTRIFUGE:
+			res_stored[RES_FUEL] += (diggers[di].ability + 7) >> 3;
 			break;
 		case RTILE_VENTILATION:
 			{
@@ -209,8 +209,8 @@ void res_update(void)
 	}
 }
 
-const char resletters[9] = "EWDBMCUH";
-const char rescolors[9] = {0xb7, 0xbe, 0xb8, 0xb5, 0xbf, 0xbc, 0xb4, 0xb1};
+const char resletters[9] = "EWBHMCUF";
+const char rescolors[9] = {0xb7, 0xbe, 0xb5, 0xb1, 0xbf, 0xbc, 0xb4, 0xb8};
 
 void res_display(void)
 {

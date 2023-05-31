@@ -17,6 +17,7 @@
 #include "rooms.h"
 #include "gamemusic.h"
 #include "gameirq.h"
+#include "messages.h"
 #include <c64/iecbus.h>
 
 #pragma stacksize(512)
@@ -151,8 +152,6 @@ int main(void)
 	display_init();
 	tiles_init();
 
-	minimap_draw();
-
 	diggers_init();
 
 	gameirq_init();
@@ -161,13 +160,17 @@ int main(void)
 
 	res_init();
 
+	res_stored[RES_METAL] = 16;
+	res_stored[RES_WATER] = 16;
+	res_stored[RES_ENERGY] = 16;
+	rooms_researched = RTILE_LABORATORY + 1;
+
 	game_load();
+
+	minimap_draw();
 
 	rooms_count();
 
-	res_stored[RES_METAL] = 16;
-	res_stored[RES_WATER] = 16;
-	rooms_researched = RTILE_LABORATORY + 1;
 	researching = 6 << (rooms_researched - RTILE_LABORATORY);
 
 	statusview = STVIEW_MINIMAP;
@@ -188,6 +191,16 @@ int main(void)
 			char c = tune_queue - TUNE_THEME_GENERAL_1 + 1 + (rand() & 1);
 			if (c >= 3) c -= 3;
 			music_queue(TUNE_THEME_GENERAL_1 + c);
+		}
+
+		if (msg_delay > 0)
+		{
+			msg_delay--;
+			if (msg_delay == 0)
+			{
+				msg_row = 0;
+				tmapmode = TMMODE_REDRAW;
+			}
 		}
 
 		if (tmapmode == TMMODE_REDRAW)
@@ -216,6 +229,8 @@ int main(void)
 		}
 		else if (researching == 0)
 		{
+			msg_queue(MSG_ROOM_RESEARCHED, rooms_researched);
+
 			rooms_researched++;
 			researching = 4 + (2 << (rooms_researched - RTILE_LABORATORY));
 

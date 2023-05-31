@@ -16,27 +16,27 @@ bool buildingchanged;
 StatusView	statusview;
 
 static const char * gamemenutexts[] = {
-	S"_MAP ", S"_TEAM", S"_DIG ", S"_BULD", S"_ASGN", S"_GARD", S"_SAVE"
+	S"_MAP", S"_TEM", S"_DIG", S"_BLD", S"_ASG", S"_GRD", S"_HIS", S"_SAV"
 };
 
 void gmenu_init(void)
 {
 	memset(Hires + 24 * 320, 0xff, 320);
 
-	for(char x=0; x<7; x++)
+	for(char x=0; x<8; x++)
 	{
-		disp_menu(5 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
+		disp_menu(4 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	}
 
-	disp_menu_color(5 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
+	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
 }
 
 
 void gmenu_set(char x)
 {
-	disp_menu_color(5 * gmenux, gamemenutexts[gmenux], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
+	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	gmenux = x;
-	disp_menu_color(5 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
+	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
 }
 
 
@@ -65,6 +65,9 @@ void gmenu_push(void)
 			gmenu = GMENU_GUARD;
 			break;
 		case 6:
+			gmenu = GMENU_HISTORY;
+			break;
+		case 7:
 			gmenu = GMENU_SAVE;
 			break;
 		}
@@ -75,7 +78,7 @@ void gmenu_nav(signed char dx)
 {
 	if (dx < 0 && gmenux > 0)
 		gmenu_set(gmenux - 1);
-	else if (dx > 0 && gmenux < 5)
+	else if (dx > 0 && gmenux < 7)
 		gmenu_set(gmenux + 1);
 }
 
@@ -107,8 +110,12 @@ void gmenu_key(char keyb)
 		gmenu_set(5);
 		gmenu_push();
 		break;
-	case KSCAN_S:
+	case KSCAN_H:
 		gmenu_set(6);
+		gmenu_push();
+		break;
+	case KSCAN_S:
+		gmenu_set(7);
 		gmenu_push();
 		break;
 	case KSCAN_CSR_RIGHT:

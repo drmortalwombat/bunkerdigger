@@ -99,8 +99,8 @@ struct tile_strata
 	{GTYPE_ROCK, 10, 10,  6, 1},
 
 	{GTYPE_ROCK,  3, 12,  3, 1},	 
-	{GTYPE_ROCK,  6, 13,  2, 1},	 
-	{GTYPE_ROCK,  6, 14,  3, 1},
+	{GTYPE_ROCK,  6, 12,  2, 1},	 
+	{GTYPE_ROCK,  6, 13,  3, 1},
 
 	{GTYPE_ROCK, 13, 15,  3, 1},
 
@@ -117,6 +117,10 @@ struct tile_strata
 
 	{GTYPE_CARBON | 0x78,  12, 11, 3, 1},	 
 	{GTYPE_CARBON | 0x78,   6, 14, 3, 1},	 
+
+	{GTYPE_URANIUM | 0x78,   2, 13, 2, 1},	 
+	{GTYPE_URANIUM | 0x78,   1, 15, 2, 1},	 
+	{GTYPE_URANIUM | 0x78,  13, 13, 2, 1},	 
 };
 
 

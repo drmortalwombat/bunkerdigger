@@ -2,6 +2,7 @@
 #include "display.h"
 #include "tiles.h"
 #include "resources.h"
+#include "messages.h"
 
 const RoomInfo		room_infos[16] = {
 	{1, 0, 0},
@@ -19,9 +20,9 @@ const RoomInfo		room_infos[16] = {
 	{2, 3, 0},
 	{1, 4, 0},
 
+	{4, 4, 0},
 	{7, 4, 0},
-	{4, 0, 0},
-	{2, 5, 0},	
+	{2, 9, 0},	
 	{1, 3, 2},
 };
 
@@ -40,11 +41,11 @@ const char room_names[16 * 10 + 1] =
 	"GYM       "
 	"ARMOURY   "
 	"SICKBAY   "
-	"STUDY     "
-
-	"EXCAVATOR "	
-	"CENTRIFUGE"
 	"RADIO     "
+
+	"STUDY     "
+	"EXCAVATOR "
+	"CENTRIFUGE"
 	"LAUNCH    ";
 
 Construction			room_constructions[4];
