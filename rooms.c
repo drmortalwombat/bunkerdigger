@@ -199,6 +199,8 @@ bool rooms_check_construction(void)
 
 		if (done)
 		{
+			msg_queue(MSG_ROOM_COMPLETED, room_constructions[i].room);
+
 			BunkerMapData[room_constructions[i].tile] = room_constructions[i].room + TILE_ROOMS;
 
 			room_count[room_constructions[i].room]++;

@@ -2,6 +2,7 @@
 #include "tiles.h"
 #include "digger.h"
 #include "display.h"
+#include "messages.h"
 
 signed char	res_oxygen[16];
 char		res_stored[NUM_RESOURCES];
@@ -86,6 +87,7 @@ void res_generate(char di)
 
 			if (TileMapFlags[ti] < 0x08)
 			{
+				msg_queue(MSG_MINE_DEPLETED, TileMapFlags[ti] & GROUND_TYPE_MASK);
 				TileMapFlags[ti] = GTYPE_SOIL;
 				tmapmode = TMMODE_REDRAW;
 			}

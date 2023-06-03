@@ -65,6 +65,11 @@ void game_save(void)
 		iec_write_bytes((char *)&res_stored, sizeof(res_stored));
 		iec_write(diggers_born);
 		iec_write_bytes((char *)&diggers, sizeof(diggers));
+		iec_write(msg_head);
+		iec_write(msg_tail);
+		iec_write(msg_row);
+		iec_write(msg_delay);
+		iec_write_bytes((char *)&messages, sizeof(messages));
 	}	
 	iec_unlisten();
 	iec_close(drive, 2);
@@ -95,6 +100,11 @@ void game_load(void)
 		iec_read_bytes((char *)&res_stored, sizeof(res_stored));
 		diggers_born = iec_read();
 		iec_read_bytes((char *)&diggers, sizeof(diggers));
+		msg_head = iec_read();
+		msg_tail = iec_read();
+		msg_row = iec_read();
+		msg_delay = iec_read();
+		iec_read_bytes((char *)&messages, sizeof(messages));
 	}
 
 	iec_untalk();
@@ -209,6 +219,7 @@ int main(void)
 			mapx = tmapx;
 			mapy = tmapy;
 			tiles_draw(mapx, mapy);
+			msg_refresh();
 			if (statusview == STVIEW_MINIMAP)
 				minimap_highlight(mapx, mapy);			
 			vic.spr_enable = 0xff;
@@ -322,6 +333,10 @@ int main(void)
 
 			case GMENU_SAVE:
 				game_save();
+				break;
+
+			case GMENU_HISTORY:
+				msg_show_history();
 				break;
 
 			}

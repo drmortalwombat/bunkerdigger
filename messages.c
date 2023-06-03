@@ -13,7 +13,8 @@ const char * msg_templates[] = {
 	"d DIED OF THIRST",
 	"d KILLED",
 	"b RESEARCHED",
-	"MINE DEPLETED"
+	"MINE DEPLETED",
+	"b COMPLETED"
 };
 
 void msg_expand(MessageType msg, char param)
@@ -58,11 +59,29 @@ void msg_queue(MessageType msg, char param)
 	msg_expand(msg, param);
 	disp_chars(0, 23 - msg_row, msg_buffer, 32, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
 	msg_row++;
-	msg_delay = 50;
+	msg_delay = 100;
+}
+
+void msg_refresh(void)
+{
+	if (msg_delay)
+	{
+		char h = msg_head - msg_row;
+		for(char i=0; i<msg_row; i++)
+		{
+			msg_expand(messages[h & 31].msg, messages[h & 31].param);
+			disp_chars(0, 23 - i, msg_buffer, 32, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
+			h++;
+		}
+	}
 }
 
 
 void msg_show_history(void)
 {
-
+	msg_delay = 100;
+	msg_row = msg_head - msg_tail;
+	if (msg_row > 24)
+		msg_row = 24;
+	msg_refresh();
 }

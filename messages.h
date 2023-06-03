@@ -11,7 +11,8 @@ enum MessageType
 	MSG_DIGGER_KILLED,
 	MSG_ROOM_RESEARCHED,
 	MSG_MINE_DEPLETED,
-
+	MSG_ROOM_COMPLETED,
+	
 	NUM_MESSAGES
 };
 
@@ -25,6 +26,8 @@ extern Message	messages[32];
 extern char		msg_head, msg_tail, msg_row, msg_delay;
 
 void msg_queue(MessageType msg, char param);
+
+void msg_refresh(void);
 
 void msg_show_history(void);
 
