@@ -3,6 +3,7 @@
 #include <c64/keyboard.h>
 #include "tiles.h"
 #include "digger.h"
+#include "resources.h"
 
 GameMenu	gmenu;
 char gmenux;
@@ -133,6 +134,15 @@ void gmenu_key(char keyb)
 	case KSCAN_SPACE:
 	case KSCAN_RETURN:
 		gmenu_push();
+		break;
+
+	case KSCAN_X:
+		rooms_researched = 16;
+		for(char i=0; i<NUM_RESOURCES; i++)
+		{
+			res_storage[i] = MAX_STORAGE;
+			res_stored[i] = MAX_STORAGE;
+		}
 		break;
 	}
 }

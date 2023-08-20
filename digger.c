@@ -632,6 +632,21 @@ bool digger_work(char di)
 					return true;
 				}
 				break;
+
+			case RTILE_LAUNCH_TOP:
+			case RTILE_LAUNCH_MID:
+			case RTILE_LAUNCH_BOTTOM:
+				if (res_stored[RES_ENERGY] >= 8 && res_stored[RES_URANIUM] > 16 && res_stored[RES_CARBON] > 16)
+				{
+					res_stored[RES_ENERGY] -= 8;
+					res_stored[RES_URANIUM] -= 16;
+					res_stored[RES_CARBON] -= 16;
+					diggers[di].count = 32;
+					diggers[di].state = DS_WORKING;
+					return true;
+				}
+				break;
+
 			}
 		}
 	}

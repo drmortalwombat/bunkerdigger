@@ -94,6 +94,14 @@ void res_generate(char di)
 			else
 				TileMapFlags[ti] -= 0x08;			
 			break;
+
+		case RTILE_LAUNCH_TOP:
+		case RTILE_LAUNCH_MID:
+		case RTILE_LAUNCH_BOTTOM:
+			BunkerMapData[ti] += 3;
+			buildingchanged = true;
+			break;
+
 		}
 	}
 }

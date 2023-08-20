@@ -199,11 +199,28 @@ bool rooms_check_construction(void)
 
 		if (done)
 		{
-			msg_queue(MSG_ROOM_COMPLETED, room_constructions[i].room);
+			char r = room_constructions[i].room;
+			char t = room_constructions[i].tile;
 
-			BunkerMapData[room_constructions[i].tile] = room_constructions[i].room + TILE_ROOMS;
+			msg_queue(MSG_ROOM_COMPLETED, r);
 
-			room_count[room_constructions[i].room]++;
+			if (r == RTILE_LAUNCH_TOP)
+			{
+				if (t >= 16)
+				{
+					if (t >= 240 || BunkerMapData[t + 16] < RTILE_LAUNCH_TOP + TILE_ROOMS || BunkerMapData[t + 16] > RTILE_MISSILE_BOTTOM + TILE_ROOMS)
+						r += 2;
+					else
+						r++;
+
+					if (BunkerMapData[t - 16] == RTILE_LAUNCH_BOTTOM + TILE_ROOMS)
+						BunkerMapData[t - 16] = RTILE_LAUNCH_MID + TILE_ROOMS;
+				}
+			}
+
+			BunkerMapData[t] = r + TILE_ROOMS;
+
+			room_count[r]++;
 
 			buildingchanged = true;			
 		}
