@@ -55,3 +55,5 @@ dkms.conf
 *.int
 *.asm
 *.dbj
+*.dbj
+*.dbj

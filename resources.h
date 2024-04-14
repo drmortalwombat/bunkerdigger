@@ -25,6 +25,8 @@ enum Resource
 extern char	res_stored[NUM_RESOURCES];
 extern char res_storage[NUM_RESOURCES];
 
+extern char time_count, time_days;
+extern char radio_count, radio_days;
 
 void res_init(void);
 

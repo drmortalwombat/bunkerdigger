@@ -574,7 +574,7 @@ bool digger_work(char di)
 				break;
 
 			case RTILE_LABORATORY:
-				if (res_stored[RES_ENERGY] && res_stored[RES_CARBON])
+				if (res_stored[RES_ENERGY] && res_stored[RES_CARBON] && rooms_researched < rooms_blueprints)
 				{
 					res_stored[RES_CARBON]--;
 					res_stored[RES_ENERGY]--;
@@ -624,6 +624,7 @@ bool digger_work(char di)
 				}
 				break;
 			case RTILE_VENTILATION:
+			case RTILE_RADIO:
 				if (res_stored[RES_ENERGY])
 				{
 					res_stored[RES_ENERGY]--;
@@ -655,9 +656,9 @@ bool digger_work(char di)
 }
 
 
-bool digger_procreate(void)
+bool digger_procreate(bool radio)
 {
-	if (diggers_born < 32)
+	if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2 && diggers_born < (radio ? 32 : 12))
 	{
 		char ri = rand() & 255;
 		if (BunkerMapData[ri] == RTILE_QUARTERS + 16)
@@ -678,7 +679,10 @@ bool digger_procreate(void)
 			diggers[di].intelligence = 1;
 			diggers[di].health = DIGGER_MAX_HEALTH;
 
-			msg_queue(MSG_DIGGER_DEHYBERNATED, di);
+			if (radio)
+				msg_queue(MSG_DIGGER_ARRIVED, di);
+			else
+				msg_queue(MSG_DIGGER_DEHYBERNATED, di);
 
 			diggers_born++;
 			diggerchanged = true;

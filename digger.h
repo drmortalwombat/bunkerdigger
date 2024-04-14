@@ -64,7 +64,7 @@ void digger_check_color(char di);
 
 bool digger_work(char di);
 
-bool digger_procreate(void);
+bool digger_procreate(bool radio);
 
 #pragma compile("digger.c")
 

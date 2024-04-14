@@ -43,7 +43,7 @@ Stumble stones:
 
 10:00 Build radio station
 12:00 Radio station becomes active
-14:00 Minig expert appeats if radio station was active
+14:00 Minig expert appears if radio station was active
 14:30 Dig through rock strata
 15:00 Build fusion reactor
 
@@ -68,9 +68,9 @@ Stumble stones:
 5 .cc.####........
 6 ...........#####
 7 .mm..........mm.
-8 .mm.######......
+8 .cc.######......
 9 #####....##.ccc.
-a ..........######
+a .mmm......######
 b ............ccc.
 c ..###.##........
 d ..uu..###....uu.

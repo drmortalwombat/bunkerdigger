@@ -29,18 +29,6 @@ const char SpriteData[] = {
 	#embed spd_sprites lzo "sprites.spd"
 };
 
-void iec_write_bytes(const char * data, int num)
-{
-	for(int i=0; i<num; i++)
-		iec_write(data[i]);
-}
-
-void iec_read_bytes(char * data, int num)
-{
-	for(int i=0; i<num; i++)
-		data[i] = iec_read();
-}
-
 void game_save(void)
 {
 	char drive = 9;
@@ -50,15 +38,20 @@ void game_save(void)
 	iec_open(drive, 2, "@0:DIGGER,P,W");
 	iec_listen(drive, 2);
 
-	iec_write(0x22);
+	iec_write(0x23);
 	if (iec_status == IEC_OK)
 	{
+		iec_write(time_count);
+		iec_write(time_days);
 		for(int i=0; i<256; i++)
 			iec_write(BunkerMapData[i]);
 		for(int i=0; i<256; i++)
 			iec_write(TileMapFlags[i]);	
 		iec_write(room_num_construction);
 		iec_write(rooms_researched);
+		iec_write(rooms_blueprints);
+		iec_write(radio_count);
+		iec_write(radio_days);
 		iec_write(researching);
 		iec_write_bytes((char *)&room_constructions, sizeof(room_constructions));
 		iec_write_bytes((char *)&res_oxygen, sizeof(res_oxygen));
@@ -86,14 +79,19 @@ void game_load(void)
 	iec_open(drive, 2, "@0:DIGGER,P,R");
 	iec_talk(drive, 2);
 	char v = iec_read();
-	if (iec_status == IEC_OK && v == 0x22)
+	if (iec_status == IEC_OK && v >= 0x23)
 	{
+		time_count = iec_read();
+		time_days = iec_read();
 		for(int i=0; i<256; i++)
 			BunkerMapData[i] = iec_read();
 		for(int i=0; i<256; i++)
 			TileMapFlags[i] = iec_read();
 		room_num_construction = iec_read();
-		rooms_researched = iec_read();
+		rooms_researched = iec_read();		
+		rooms_blueprints = iec_read();
+		radio_count = iec_read();
+		radio_days = iec_read();
 		researching = iec_read();
 		iec_read_bytes((char *)&room_constructions, sizeof(room_constructions));
 		iec_read_bytes((char *)&res_oxygen, sizeof(res_oxygen));
@@ -174,6 +172,7 @@ int main(void)
 	res_stored[RES_WATER] = 16;
 	res_stored[RES_ENERGY] = 16;
 	rooms_researched = RTILE_LABORATORY + 1;
+	rooms_blueprints = RTILE_RADIO + 1;
 
 	game_load();
 
@@ -188,6 +187,7 @@ int main(void)
 	
 	char	rescount = irqcount;
 	char	pirqcount = irqcount;
+	char	upcount = 0;
 
 	tmapx = 8; tmapy = 0;
 	cursorx = 8; cursory = 0;
@@ -238,7 +238,7 @@ int main(void)
 				rooms_display();
 			buildingchanged = false;
 		}
-		else if (researching == 0)
+		else if (researching == 0 && rooms_researched < rooms_blueprints)
 		{
 			msg_queue(MSG_ROOM_RESEARCHED, rooms_researched);
 
@@ -353,16 +353,22 @@ int main(void)
 					tmapmode = TMMODE_REDRAW;
 				res_display();
 				digger_stats();
+				upcount++;
 			}
 
 			diggers_iterate();
 
-			if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2)
-				digger_procreate();
+			digger_procreate(false);
 
 			while (pirqcount == irqcount)
 				;
 			pirqcount = irqcount;
+
+			if (upcount > 10 && statusview == STVIEW_BUILD)
+			{
+				rooms_display();
+				upcount = 0;
+			}
 		}
 
 	}

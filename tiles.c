@@ -17,6 +17,45 @@ const unsigned short BunkerTileData[] = {
 	#embed ctm_tiles16 word "bunkerbm.ctm"
 };
 
+
+struct BunkerTilesBuffer
+{
+	char			a[10 * sizeof(BunkerColor0Data)];
+};
+
+constexpr BunkerTilesBuffer build_BunkerTilesBuffer(void)
+{
+const char BunkerHiresData[] = {
+	#embed ctm_chars "bunkerbm.ctm"
+};
+
+const char BunkerColor0Data[] = {
+	#embed ctm_attr1 "bunkerbm.ctm"
+};
+
+const char BunkerColor1Data[] = {
+	#embed ctm_attr2 "bunkerbm.ctm"
+};
+
+	BunkerTilesBuffer		btd;
+
+	for(int i=0; i<sizeof(BunkerColor0Data); i++)
+	{
+		for(int j=0; j<8; j++)
+			btd.a[10 * i + j] = BunkerHiresData[8 * i + j];
+		btd.a[10 * i + 8] = BunkerColor1Data[i];
+		btd.a[10 * i + 9] = BunkerColor0Data[i];
+	}
+	return btd;
+}
+
+const BunkerTilesBuffer	bunkerTilesBuffer = build_BunkerTilesBuffer();
+
+const char *	bunkerTiles[] = {
+#for(i, 44 * 64)	bunkerTilesBuffer.a + 10 * BunkerTileData[i],
+};
+
+
 #if 0
 char BunkerMapData[] = {
 	#embed ctm_map8 "bunkerbm.ctm"
@@ -108,12 +147,13 @@ struct tile_strata
 	{GTYPE_METAL  | 0xf8,  11,  3, 2, 1},	 
 	{GTYPE_METAL  | 0xf8,   1,  7, 2, 1},	 
 	{GTYPE_METAL  | 0xf8,  13,  7, 2, 1},	 
-	{GTYPE_METAL  | 0xf8,   1,  8, 2, 1},	 
+	{GTYPE_METAL  | 0xf8,   1, 10, 3, 1},	 
 
 	{GTYPE_CARBON | 0x78,   2,  3, 1, 1},	 
 	{GTYPE_CARBON | 0x78,   6,  4, 1, 1},	 
 	{GTYPE_CARBON | 0x78,   1,  5, 2, 1},	 
 	{GTYPE_CARBON | 0x78,  12,  9, 3, 1},	 
+	{GTYPE_CARBON | 0x78,   1,  8, 2, 1},	 
 
 	{GTYPE_CARBON | 0x78,  12, 11, 3, 1},	 
 	{GTYPE_CARBON | 0x78,   6, 14, 3, 1},	 
@@ -248,6 +288,29 @@ static char tile_ground_color[] = {
 
 void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 {
+#if 1
+	const char * const * tp = bunkerTiles + 64 * tile;
+
+	for(char iy=0; iy<8; iy++)
+	{
+		for(char ix=0; ix<8; ix++)
+		{
+			const char * shp = tp[ix];
+			#pragma unroll(full)
+			for(char i=0; i<8; i++)
+				hp[i] = shp[i];
+
+			sp[ix] = shp[8];
+			cp[ix] = shp[9];
+			hp += 8;
+		}
+
+		hp += 320 - 64;
+		sp += 40;
+		cp += 40;
+		tp += 8;
+	}
+#else
 	const unsigned short * tp = BunkerTileData + 64 * tile;
 
 	for(char iy=0; iy<8; iy++)
@@ -270,7 +333,7 @@ void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 		cp += 40;
 		tp += 8;
 	}
-
+#endif
 	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
 	cp -= 40;
 	for(char ix=0; ix<8; ix++)
@@ -282,6 +345,30 @@ void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 
 void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 {
+#if 1
+	const char * const * tp = bunkerTiles + 64 * tile;
+	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
+
+	for(char iy=0; iy<8; iy++)
+	{
+		for(char ix=0; ix<8; ix++)
+		{
+			const char * shp = tp[ix];
+			#pragma unroll(full)
+			for(char i=0; i<8; i++)
+				hp[i] = shp[i];
+
+			sp[ix] = shp[8];
+			cp[ix] = gc;
+			hp += 8;
+		}
+
+		hp += 320 - 64;
+		sp += 40;
+		cp += 40;
+		tp += 8;
+	}
+#else
 	const unsigned short * tp = BunkerTileData + 64 * tile;
 
 	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
@@ -306,7 +393,7 @@ void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 		cp += 40;
 		tp += 8;
 	}
-
+#endif
 }
 
 inline void tile_draw(char tile, char flags, char x, char y)

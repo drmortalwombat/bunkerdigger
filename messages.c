@@ -9,12 +9,14 @@ char msg_buffer[33];
 
 const char * msg_templates[] = {
 	"d DEHYBERNATED",
+	"d ARRIVED AT BUNKER",
 	"d SUFFOCATED",
 	"d DIED OF THIRST",
 	"d KILLED",
 	"b RESEARCHED",
 	"MINE DEPLETED",
-	"b COMPLETED"
+	"b COMPLETED",
+	"b BLUEPRINT"
 };
 
 void msg_expand(MessageType msg, char param)
