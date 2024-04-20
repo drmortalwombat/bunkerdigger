@@ -22,12 +22,19 @@
 
 #pragma stacksize(512)
 
+#pragma section(resources, 0)
+
 #pragma region( main, 0x0880, 0xa000, , , {code, data, bss, heap})
 #pragma region( stack, 0x0400, 0x0600, , , {stack})
+#pragma region( resources, 0xc000, 0xd000, , , {resources})
+
+#pragma data(resources)
 
 const char SpriteData[] = {
 	#embed spd_sprites lzo "sprites.spd"
 };
+
+#pragma data(data)
 
 void game_save(void)
 {

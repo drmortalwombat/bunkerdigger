@@ -5,7 +5,7 @@ const char MinimapHiresData[] = {
 	#embed ctm_chars "minimap.ctm"
 };
 
-char * const MinimapHiresTab[16] = {
+__striped char * const MinimapHiresTab[16] = {
 	Hires + 24 * 8 + 0 * 320,
 	Hires + 24 * 8 + 1 * 320,
 	Hires + 24 * 8 + 2 * 320,

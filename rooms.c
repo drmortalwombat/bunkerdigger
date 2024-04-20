@@ -53,7 +53,7 @@ char					room_num_construction;
 
 void rooms_count(void)
 {
-	for(char i=0; i<16; i++)
+	for(char i=0; i<21; i++)
 		room_count[i] = 0;
 	for(int i=0; i<256; i++)
 	{
@@ -61,8 +61,6 @@ void rooms_count(void)
 		if (TileFlags[tile] & TF_ROOM)
 		{
 			RoomTile	rt = tile - TILE_ROOMS;
-			if (rt > RTILE_LAUNCH_TOP)
-				rt = RTILE_LAUNCH_TOP;
 			room_count[rt]++;
 		}
 	}
@@ -79,6 +77,11 @@ void rooms_count(void)
 	res_storage[RES_CARBON] = 4 + 8 * nstore;
 	res_storage[RES_URANIUM] = 2 * nstore;
 
+	res_storage[RES_FUEL] = 
+		(room_count[RTILE_MISSILE_TOP] + 
+		room_count[RTILE_MISSILE_MID] +
+		room_count[RTILE_MISSILE_BOTTOM]) * 16;
+
 	for(char i=0; i<NUM_RESOURCES; i++)
 	{
 		char s = (res_storage[i] + 15) & ~15;
@@ -90,31 +93,41 @@ void rooms_count(void)
 
 void rooms_display(void)
 {
-	for(char i=0; i<rooms_researched; i++)
+	for(char i=0; i<rooms_blueprints; i++)
 	{
 		char cnt = room_count[i];
 
 		char c = VCOL_BLACK;
 		char fc = VCOL_WHITE + 16 * VCOL_LT_GREY;
 
-		if (res_stored[RES_METAL] < 4 * room_infos[i].res_metal ||
-			res_stored[RES_CARBON] < 4 * room_infos[i].res_carbon ||
-			res_stored[RES_URANIUM] < 4 * room_infos[i].res_uranium)
+		if (i >= rooms_researched)
 		{
 			fc = VCOL_LT_BLUE + 16 * VCOL_BLUE;
 			if ( i == buildingi)
 				c = VCOL_BLUE;
 		}
+		else if (res_stored[RES_METAL] < 4 * room_infos[i].res_metal ||
+			res_stored[RES_CARBON] < 4 * room_infos[i].res_carbon ||
+			res_stored[RES_URANIUM] < 4 * room_infos[i].res_uranium)
+		{
+			fc = VCOL_ORANGE + 16 * VCOL_RED;
+			if ( i == buildingi)
+				c = VCOL_RED;
+		}
 		else if (i == buildingi)
 			c = VCOL_MED_GREY;
 
-		if (cnt >= 10)
+		char t = '0';
+		while (cnt >= 10)
 		{
-			disp_char(24, i, '1', 0x00, 0xbf);
+			t++;
 			cnt -= 10;
 		}
+		if (t != '0')
+			disp_char(24, i, t, c, 0xbf);
 		else			
 			disp_char(24, i, ' ', c, 0xbf);
+
 		disp_char(25, i, '0' + cnt, c, 0xbf);
 
 		disp_char(26, i, '*', c, 0xbf);
@@ -126,7 +139,7 @@ void rooms_display(void)
 		disp_char(39, i, '0' + room_infos[i].res_uranium, VCOL_BLACK, 0x64);
 	}
 
-	for(char i=rooms_researched; i<16; i++)
+	for(char i=rooms_blueprints; i<16; i++)
 		disp_space(24, i, 16, VCOL_BLACK, VCOL_BLACK);
 }
 

@@ -130,7 +130,7 @@ void diggers_move(void)
 			__assume(sx < 16);
 			__assume(sy < 16);
 
-			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+			char * dp = MinimapHiresTab[dy] + (8 * dx + 2 * sy);
 
 			char m = ~(0xc0 >> 2 * sx);
 			dp[0] &= m;
@@ -637,7 +637,7 @@ bool digger_work(char di)
 			case RTILE_LAUNCH_TOP:
 			case RTILE_LAUNCH_MID:
 			case RTILE_LAUNCH_BOTTOM:
-				if (res_stored[RES_ENERGY] >= 8 && res_stored[RES_URANIUM] > 16 && res_stored[RES_CARBON] > 16)
+				if (res_stored[RES_ENERGY] >= 8 && res_stored[RES_URANIUM] >= 16 && res_stored[RES_CARBON] >= 16)
 				{
 					res_stored[RES_ENERGY] -= 8;
 					res_stored[RES_URANIUM] -= 16;
