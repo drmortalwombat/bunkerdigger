@@ -19,6 +19,8 @@ enum DiggerState
 	DS_MOVE_LEFT,
 	DS_CLIMB_UP,
 	DS_CLIMB_DOWN,
+	DS_DEFEND_RIGHT,
+	DS_DEFEND_LEFT,
 	DS_WORKING
 };
 
@@ -36,7 +38,7 @@ struct Digger
 	volatile DiggerState	state;
 	DiggerTask				task;
 	volatile char			count;
-	char					target;
+	char					target, enemy;
 	char					ability, fight, intelligence, health;
 };
 

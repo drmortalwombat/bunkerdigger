@@ -18,6 +18,7 @@
 #include "gamemusic.h"
 #include "gameirq.h"
 #include "messages.h"
+#include "enemies.h"
 #include <c64/iecbus.h>
 
 #pragma stacksize(512)
@@ -168,6 +169,7 @@ int main(void)
 	tiles_init();
 
 	diggers_init();
+	enemies_init();
 
 	gameirq_init();
 
@@ -364,6 +366,7 @@ int main(void)
 			}
 
 			diggers_iterate();
+			enemies_iterate();
 
 			digger_procreate(false);
 

@@ -1,6 +1,7 @@
 #include "gameirq.h"
 #include "gamemenu.h"
 #include "digger.h"
+#include "enemies.h"
 #include "tiles.h"
 #include <c64/joystick.h>
 #include <c64/rasterirq.h>
@@ -66,6 +67,7 @@ __interrupt void irq_upper(void)
 	case IRQP_MOVE_DIGGER:
 //		vic.color_border = VCOL_YELLOW;
 		diggers_move();
+		enemies_move();
 		break;
 	case IRQP_MOVE_ENEMY:
 		break;
@@ -73,6 +75,7 @@ __interrupt void irq_upper(void)
 //		vic.color_border = VCOL_YELLOW;
 		{
 			char si = diggers_sprites(0, mapx, mapy);
+			si = enemies_sprites(si, mapx, mapy);
 
 			while (si < 16)
 			{

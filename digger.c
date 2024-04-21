@@ -5,6 +5,7 @@
 #include "minimap.h"
 #include "gamemenu.h"
 #include "messages.h"
+#include "enemies.h"
 #include <c64/sprites.h>
 
 extern __striped Digger	diggers[32];
@@ -238,6 +239,16 @@ void diggers_move(void)
 			if (!(irqcount & 3) && diggers[i].count)
 				diggers[i].count--;
 			break;
+		case DS_DEFEND_LEFT:
+		case DS_DEFEND_RIGHT:
+			if (enemies[diggers[i].enemy].health > 0)
+				enemies[diggers[i].enemy].health--;			
+			if (!--diggers[i].count)
+			{
+				diggers[i].state = DS_IDLE;
+				diggers[i].mi = 65;
+			}
+			break;
 		case DS_IDLE:
 			diggers[i].mi = 65;
 			break;
@@ -335,6 +346,33 @@ void digger_move_random(char di)
 	}	
 }
 
+bool digger_defend(char di)
+{
+	for(char i=0; i<8; i++)
+	{
+		if (enemies[i].state >= ES_IDLE &&
+			enemies[i].tx == diggers[di].tx &&
+			enemies[i].ty == diggers[di].ty)
+		{
+			if (enemies[i].sx >= diggers[di].sx)
+			{
+				diggers[di].state = DS_DEFEND_RIGHT;
+				diggers[di].mi = 64 + 17;
+			}
+			else
+			{
+				diggers[di].state = DS_DEFEND_LEFT;
+				diggers[di].mi = 64 + 9;
+			}
+			diggers[di].enemy = i;
+			diggers[di].count = 8;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void digger_decide(char di)
 {
 	char ti = diggers[di].ty * 16 + diggers[di].tx;
@@ -360,15 +398,19 @@ void digger_decide(char di)
 		}
 		break;
 	case DTASK_IDLE:
-		digger_move_random(di);
+		if (!digger_defend(di))
+			digger_move_random(di);
 		break;
 	case DTASK_GUARD:
-		if (ti == diggers[di].target)
-			digger_move_random(di);
-		else
+		if (!digger_defend(di))
 		{
-			char mi = tile_plan(ti, diggers[di].target);
-			digger_move_to(di, mi);
+			if (ti == diggers[di].target)
+				digger_move_random(di);
+			else
+			{
+				char mi = tile_plan(ti, diggers[di].target);
+				digger_move_to(di, mi);
+			}
 		}
 		break;
 	case DTASK_WORK:
