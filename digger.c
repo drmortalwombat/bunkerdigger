@@ -22,6 +22,53 @@ const char digger_names[] =
 	"ALEX FRED MARIAJUDY MINA CHRISBOB  TIM  "
 	"TOM  TONIAKIM  JAMESSIMONLINDAANNA OLGA ";
 
+#define DIF_ABILITY			0x00
+#define DIF_FIGHT			0x40
+#define DIF_INTELLIGENCE	0x80
+
+
+const char diggers_flags[] = {
+	DIF_ABILITY      + 0,
+	DIF_FIGHT        + 1,
+	DIF_FIGHT        + 1,
+	DIF_ABILITY      + 1,
+
+	DIF_INTELLIGENCE + 1,
+	DIF_ABILITY      + 1,
+	DIF_FIGHT        + 2,
+	DIF_INTELLIGENCE + 1,
+
+	DIF_ABILITY      + 1,
+	DIF_FIGHT        + 2,
+	DIF_ABILITY      + 1,
+	DIF_ABILITY      + 2,
+
+	DIF_INTELLIGENCE + 2,
+	DIF_FIGHT        + 3,
+	DIF_FIGHT        + 2,
+	DIF_ABILITY      + 3,
+
+	DIF_ABILITY      + 4,
+	DIF_FIGHT        + 4,
+	DIF_ABILITY      + 6,
+	DIF_ABILITY      + 5,
+
+	DIF_INTELLIGENCE + 7,
+	DIF_FIGHT        + 5,
+	DIF_FIGHT        + 9,
+	DIF_ABILITY      + 6,
+
+	DIF_ABILITY      + 8,
+	DIF_FIGHT        + 10,
+	DIF_ABILITY      + 7,
+	DIF_ABILITY      + 11,
+
+	DIF_INTELLIGENCE + 12,
+	DIF_ABILITY      + 13,
+	DIF_FIGHT        + 8,
+	DIF_ABILITY      + 16
+};
+
 void diggers_init(void)
 {
 	for(char i=0; i<32; i++)
@@ -40,40 +87,11 @@ void diggers_init(void)
 	diggers[0].fight = 1;
 	diggers[0].intelligence = 1;
 	diggers[0].health = DIGGER_MAX_HEALTH;
+	diggers[0].enemy = 0xff;
 
 	digger_check_color(0);
 
 	diggers_born = 1;
-
-#if 0
-	diggers[1].tx = 8;
-	diggers[1].ty = 6; 
-	diggers[1].sy = 8;
-	diggers[1].sx = 8;
-	diggers[1].mi = 64 + 1;
-	diggers[1].color = VCOL_YELLOW;
-	diggers[1].state = DS_IDLE;
-	diggers[1].task = DTASK_MOVE;
-	diggers[1].target = 0x4a;
-	diggers[1].ability = 1;
-	diggers[1].fight = 1;
-	diggers[1].intelligence = 1;
-	diggers[1].health = DIGGER_MAX_HEALTH;
-
-	diggers[2].tx = 0;
-	diggers[2].ty = 4; 
-	diggers[2].sy = 8;
-	diggers[2].sx = 8;
-	diggers[2].mi = 64 + 1;
-	diggers[2].color = VCOL_BLUE;
-	diggers[2].state = DS_IDLE;
-	diggers[2].task = DTASK_MOVE;
-	diggers[2].target = 0x4a;
-	diggers[2].ability = 1;
-	diggers[2].fight = 1;
-	diggers[2].intelligence = 1;
-	diggers[2].health = DIGGER_MAX_HEALTH;
-#endif
 }
 
 void digger_check_color(char di)
@@ -370,6 +388,7 @@ bool digger_defend(char di)
 		}
 	}
 
+	diggers[di].enemy = 0xff;
 	return false;
 }
 
@@ -414,7 +433,8 @@ void digger_decide(char di)
 		}
 		break;
 	case DTASK_WORK:
-		digger_work(di);
+		if (diggers[di].enemy == 0xff || !digger_defend(di))
+			digger_work(di);
 		break;
 	}	
 }
@@ -720,6 +740,20 @@ bool digger_procreate(bool radio)
 			diggers[di].fight = 1;
 			diggers[di].intelligence = 1;
 			diggers[di].health = DIGGER_MAX_HEALTH;
+			diggers[di].enemy = 0xff;
+
+			switch (diggers_flags[di] & 0xc0)
+			{
+			case DIF_ABILITY:
+				diggers[di].ability += diggers_flags[di] & 0x3f;
+				break;
+			case DIF_FIGHT:
+				diggers[di].fight += diggers_flags[di] & 0x3f;
+				break;
+			case DIF_INTELLIGENCE:
+				diggers[di].intelligence += diggers_flags[di] & 0x3f;
+				break;
+			}
 
 			if (radio)
 				msg_queue(MSG_DIGGER_ARRIVED, di);

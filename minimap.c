@@ -5,6 +5,8 @@ const char MinimapHiresData[] = {
 	#embed ctm_chars "minimap.ctm"
 };
 
+#pragma align(MinimapHiresData, 256)
+
 __striped char * const MinimapHiresTab[16] = {
 	Hires + 24 * 8 + 0 * 320,
 	Hires + 24 * 8 + 1 * 320,

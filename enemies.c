@@ -3,8 +3,11 @@
 #include "digger.h"
 #include <c64/vic.h>
 
+char enemies_throttle;
+
 void enemies_init(void)
 {
+	enemies_throttle = 0;
 	for(char i=0; i<8; i++)
 		enemies[i].state = ES_FREE;
 }
@@ -27,10 +30,10 @@ void enemies_move(void)
 			if (!--enemies[i].count)
 			{
 				enemies[i].state = ES_IDLE;
-				enemies[i].mi = 98;
+				enemies[i].mi &= ~3;
 			}
 			else
-				enemies[i].mi ^= 1;
+				enemies[i].mi ^= 2;
 			break;
 		case ES_MOVE_LEFT:
 			if (enemies[i].sx == 0)
@@ -44,22 +47,25 @@ void enemies_move(void)
 			if (!--enemies[i].count)
 			{
 				enemies[i].state = ES_IDLE;
-				enemies[i].mi = 96;
+				enemies[i].mi &= ~3;
 			}
 			else
-				enemies[i].mi ^= 1;
+				enemies[i].mi ^= 2;
 			break;		
 		case ES_ATTACK_RIGHT:
 		case ES_ATTACK_LEFT:
 			if (!--enemies[i].count)
 			{
 				enemies[i].state = ES_IDLE;
-				enemies[i].mi = 98;
+				enemies[i].mi &= ~1;
+				enemies[i].sx = 8;
 			}
-			else
+			else if (enemies[i].count & 1)
 			{
-				if (diggers[enemies[i].target].health > 0)
-					diggers[enemies[i].target].health--;			
+				if (diggers[enemies[i].target].health >= enemies[i].damage)
+					diggers[enemies[i].target].health -= enemies[i].damage;
+				else
+					diggers[enemies[i].target].health = 0;
 
 				enemies[i].mi ^= 1;
 			}
@@ -69,26 +75,45 @@ void enemies_move(void)
 				enemies[i].count--;
 			break;
 		case ES_IDLE:
-			enemies[i].mi = 96;
+			enemies[i].mi &= 0xf8;
 			break;
 		}
 	}
 }
 
+static const struct EnemyType
+{
+	char	mi, color, health, damage;	
+}	EnemieProgression[] = {
+	{0x60, VCOL_BROWN,      0x10, 0x01},
+	{0x68, VCOL_YELLOW,     0x08, 0x03},
+	{0x60, VCOL_DARK_GREY,  0x20, 0x01},
+	{0x70, VCOL_LT_RED,     0x10, 0x04},
+	{0x68, VCOL_LT_BLUE,    0x20, 0x06},
+	{0x78, VCOL_DARK_GREY,  0x40, 0x08},
+	{0x70, VCOL_BROWN,      0x30, 0x0c},
+	{0x78, VCOL_PURPLE,     0x80, 0x10}	
+};
+
 void enemy_spawn(char ei)
 {
 	char ri = rand() & 255;
-	if (TileFlags[BunkerMapData[ri]] & TF_BUNKER)
+	char tf = TileFlags[BunkerMapData[ri]];
+	if ((tf & TF_BUNKER) && (tf & (TF_LEFT | TF_RIGHT)))
 	{
+		char et = (rand() & 127) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
+		if (et > 7) et = 7;
+
 		enemies[ei].tx = ri & 0x0f;
 		enemies[ei].ty = ri >> 4; 
 		enemies[ei].sy = 8;
 		enemies[ei].sx = 8;
-		enemies[ei].mi = 96;
-		enemies[ei].color = VCOL_YELLOW;
+		enemies[ei].mi = EnemieProgression[et].mi;
+		enemies[ei].color = EnemieProgression[et].color;
 		enemies[ei].state = ES_IDLE;
 		enemies[ei].target = 0xff;
-		enemies[ei].health = 0x10;
+		enemies[ei].health = EnemieProgression[et].health;
+		enemies[ei].damage = EnemieProgression[et].damage;
 	}
 }
 
@@ -100,15 +125,19 @@ bool enemy_attack(char ei)
 			diggers[i].tx == enemies[ei].tx &&
 			diggers[i].ty == enemies[ei].ty)
 		{
+			diggers[i].enemy = ei;
+
 			if (diggers[i].sx >= enemies[ei].sx)
 			{
 				enemies[ei].state = ES_ATTACK_RIGHT;
-				enemies[ei].mi = 98;
+				enemies[ei].mi |= 0x04;
+				enemies[ei].sx -= 4;
 			}
 			else
 			{
 				enemies[ei].state = ES_ATTACK_LEFT;
-				enemies[ei].mi = 96;
+				enemies[ei].mi &= ~0x04;
+				enemies[ei].sx += 4;
 			}
 			enemies[ei].target = i;
 			enemies[ei].count = 8;
@@ -119,7 +148,7 @@ bool enemy_attack(char ei)
 	return false;	
 }
 
-void enemies_iterate(void)
+void enemies_iterate(char frames)
 {
 	char ei = 0xff;
 	for(char i=0; i<8; i++)
@@ -128,7 +157,7 @@ void enemies_iterate(void)
 		{
 			enemies[i].state = ES_DEAD;
 			enemies[i].count = 50;
-			enemies[i].mi = 100;
+			enemies[i].mi = (enemies[i].mi & 0xf8) | 3;
 		}
 
 		switch(enemies[i].state)
@@ -145,23 +174,26 @@ void enemies_iterate(void)
 			char ti = enemies[i].ty * 16 + enemies[i].tx;
 			char tf = TileFlags[BunkerMapData[ti]];
 
-			switch (rand() & 7)
+			switch (rand() & 63)
 			{
-			case 0:
+			case 0 ... 7:
 				if (enemies[i].tx > 0 && (tf & TF_LEFT))
 				{
 					enemies[i].count = 16;
-					enemies[i].mi = 96;
+					enemies[i].mi &= ~0x04;
 					enemies[i].state = ES_MOVE_LEFT;
 				}
 				break;
-			case 1:
+			case 8 ... 15:
 				if (enemies[i].tx < 15 && (tf & TF_RIGHT))
 				{
 					enemies[i].count = 16;
-					enemies[i].mi = 98;
+					enemies[i].mi |= 0x04;
 					enemies[i].state = ES_MOVE_RIGHT;
 				}
+				break;
+			case 16:
+				enemies[i].state = ES_FREE;
 				break;
 			default:
 				enemy_attack(i);
@@ -171,8 +203,12 @@ void enemies_iterate(void)
 		}
 	}
 
-	if (ei != 0x3f && !(rand() & 0xff))
-		enemy_spawn(ei);
+	while ((char)(frames - enemies_throttle) >= 32)
+	{
+		if (ei != 0xff)
+			enemy_spawn(ei);
+		enemies_throttle += 32;
+	}
 }
 
 

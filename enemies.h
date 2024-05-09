@@ -20,7 +20,7 @@ struct Enemy
 	char 					color;
 	volatile EnemyState		state;
 	volatile char			count;
-	char					target, health;
+	char					target, health, damage;
 };
 
 extern __striped Enemy	enemies[8];
@@ -29,7 +29,7 @@ void enemies_init(void);
 
 void enemies_move(void);
 
-void enemies_iterate(void);
+void enemies_iterate(char frames);
 
 char enemies_sprites(char si, char sx, char sy);
 

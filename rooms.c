@@ -48,8 +48,8 @@ const char room_names[16 * 10 + 1] =
 	"CENTRIFUGE"
 	"LAUNCH    ";
 
-Construction			room_constructions[4];
-char					room_num_construction;
+__striped Construction		room_constructions[4];
+char						room_num_construction;
 
 void rooms_count(void)
 {

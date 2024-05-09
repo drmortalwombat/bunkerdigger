@@ -8,6 +8,8 @@ static char * const Color	=	(char *)0xd800;
 static char * const Sprites =  (char *)0xd000;
 static char * const Hires	=	(char *)0xe000;
 
+extern const char FontHiresData[];
+
 extern __striped char * const HiresRow[25];
 
 void disp_fill(char x, char y, char w, char h, char back);

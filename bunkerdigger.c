@@ -19,6 +19,7 @@
 #include "gameirq.h"
 #include "messages.h"
 #include "enemies.h"
+#include "window.h"
 #include <c64/iecbus.h>
 
 #pragma stacksize(512)
@@ -28,6 +29,7 @@
 #pragma region( main, 0x0880, 0xa000, , , {code, data, bss, heap})
 #pragma region( stack, 0x0400, 0x0600, , , {stack})
 #pragma region( resources, 0xc000, 0xd000, , , {resources})
+#pragma region( zeropage, 0x80, 0xf8, , , {zeropage})
 
 #pragma data(resources)
 
@@ -70,7 +72,10 @@ void game_save(void)
 		iec_write(msg_tail);
 		iec_write(msg_row);
 		iec_write(msg_delay);
+		iec_write(story_shown);
+		iec_write(story_pending);
 		iec_write_bytes((char *)&messages, sizeof(messages));
+		iec_write_bytes((char *)&enemies, sizeof(enemies));
 	}	
 	iec_unlisten();
 	iec_close(drive, 2);
@@ -110,7 +115,10 @@ void game_load(void)
 		msg_tail = iec_read();
 		msg_row = iec_read();
 		msg_delay = iec_read();
+		story_shown = iec_read();
+		story_pending = iec_read();
 		iec_read_bytes((char *)&messages, sizeof(messages));
+		iec_read_bytes((char *)&enemies, sizeof(enemies));
 	}
 
 	iec_untalk();
@@ -176,6 +184,7 @@ int main(void)
 	gmenu_init();
 
 	res_init();
+	story_init();
 
 	res_stored[RES_METAL] = 16;
 	res_stored[RES_WATER] = 16;
@@ -205,6 +214,9 @@ int main(void)
 
 	for(;;)
 	{
+//		if (time_count == 10)
+//			StoryPending |= 15; //1 << STM_INTRO;
+
 		if (tune_queue == tune_current)
 		{
 			char c = tune_queue - TUNE_THEME_GENERAL_1 + 1 + (rand() & 1);
@@ -353,7 +365,7 @@ int main(void)
 			gmenu = GMENU_NONE;
 		}
 		else
-		{			
+		{	
 			while ((char)(irqcount - rescount) >= 3)
 			{
 				res_update();
@@ -366,7 +378,7 @@ int main(void)
 			}
 
 			diggers_iterate();
-			enemies_iterate();
+			enemies_iterate(irqcount);
 
 			digger_procreate(false);
 
@@ -379,6 +391,24 @@ int main(void)
 				rooms_display();
 				upcount = 0;
 			}
+
+			if (story_messages())
+			{
+				switch (statusview)
+				{
+				case STVIEW_BUILD:
+					rooms_display();
+					break;
+				case STVIEW_MINIMAP:
+					minimap_draw();
+					minimap_highlight(mapx, mapy);
+					break;
+				case STVIEW_TEAM:
+					diggers_list();
+					break;
+				}
+			}
+
 		}
 
 	}

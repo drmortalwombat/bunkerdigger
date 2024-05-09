@@ -77,6 +77,11 @@ d ..uu..###....uu.
 e ......ccc.......
 f .uu..........###
 
+
+DAY
+01  Generator+Hydro+Mine+Quarter
+02  
+
 8+8
 Lab:      4
 Vent:     8

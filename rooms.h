@@ -19,10 +19,10 @@ extern const char room_names[16 * 10 + 1];
 
 extern char room_count[21];
 
-extern Construction			room_constructions[4];
-extern char					room_num_construction;
-extern char					rooms_researched, rooms_blueprints;
-extern unsigned				researching;
+extern __striped Construction	room_constructions[4];
+extern char						room_num_construction;
+extern char						rooms_researched, rooms_blueprints;
+extern unsigned					researching;
 
 void rooms_display(void);
 
