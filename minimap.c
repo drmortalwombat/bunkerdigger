@@ -46,7 +46,7 @@ void minimap_draw(void)
 			for(char i=0; i<8; i++)
 				hp[i] = shp[i];
 
-			sp[0] = VCOL_LT_GREY * 16 | VCOL_DARK_GREY;
+			sp[0] = VCOL_LT_GREY * 16 | VCOL_YELLOW;
 			cp[0] = VCOL_DARK_GREY;
 		}
 	}
@@ -63,12 +63,12 @@ void minimap_highlight(char sx, char sy)
 
 			if ((char)(x - sx) < 3 && (char)(y - sy) < 3)
 			{
-				sp[0] = VCOL_WHITE * 16 | VCOL_MED_GREY;
+				sp[0] = VCOL_WHITE * 16 | VCOL_YELLOW;
 				cp[0] = VCOL_RED;
 			}
 			else
 			{
- 				sp[0] = VCOL_LT_GREY * 16 | VCOL_DARK_GREY;
+ 				sp[0] = VCOL_LT_GREY * 16 | VCOL_YELLOW;
 				cp[0] = VCOL_DARK_GREY;
 			}
 		}

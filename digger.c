@@ -8,7 +8,9 @@
 #include "enemies.h"
 #include <c64/sprites.h>
 
-extern __striped Digger	diggers[32];
+#pragma bss(xbss)
+__striped Digger	diggers[32];
+#pragma bss(bss)
 
 static const char digger_task_char[] = {
 	'W', 'M', 'G', 'I', 'D'
@@ -21,6 +23,8 @@ const char digger_names[] =
 	"MONA MARK BILL ANDY TILLYSUSANMARTHBETH "
 	"ALEX FRED MARIAJUDY MINA CHRISBOB  TIM  "
 	"TOM  TONIAKIM  JAMESSIMONLINDAANNA OLGA ";
+
+#pragma align(digger_names, 256)
 
 #define DIF_ABILITY			0x00
 #define DIF_FIGHT			0x40
@@ -156,6 +160,9 @@ void diggers_move(void)
 			dp[1] &= m;
 		}
 
+		if (diggers[i].warn)
+			diggers[i].warn--;
+
 		switch(diggers[i].state)
 		{
 		case DS_MOVE_RIGHT:
@@ -254,8 +261,11 @@ void diggers_move(void)
 			break;
 		case DS_DEAD:
 			diggers[i].mi = 88;
-			if (!(irqcount & 3) && diggers[i].count)
-				diggers[i].count--;
+			if (!(irqcount & 3))
+			{
+				if (!--diggers[i].count)
+					diggers[i].state = DS_FREE;
+			}
 			break;
 		case DS_DEFEND_LEFT:
 		case DS_DEFEND_RIGHT:
@@ -272,7 +282,7 @@ void diggers_move(void)
 			break;
 		}
 
-		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE)
+		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE && !(diggers[i].warn & 1))
 		{
 			char dx = diggers[i].tx;
 			char dy = diggers[i].ty;
@@ -556,7 +566,7 @@ void diggers_list(void)
 		char x = (i & 1) * 8 + 24;
 		char y = i >> 1;
 
-		if (diggers[i].state != DS_FREE)
+		if (i < diggers_born)
 		{
 			char c = VCOL_BLACK;
 			if (i == diggeri)

@@ -44,38 +44,7 @@ void gmenu_set(char x)
 void gmenu_push(void)
 {
 	if (gmenu == GMENU_NONE)
-	{
-		switch (gmenux)
-		{
-		case 0:
-			gmenu = GMENU_MAP;
-			break;
-		case 1:
-			gmenu = GMENU_TEAM;
-			break;
-		case 2:
-			gmenu = GMENU_DIG;
-			break;
-		case 3:
-			gmenu = GMENU_BUILD;
-			break;
-		case 4:
-			gmenu = GMENU_ASSIGN;
-			break;
-		case 5:
-			gmenu = GMENU_GUARD;
-			break;
-		case 6:
-			gmenu = GMENU_HISTORY;
-			break;
-		case 7:
-			gmenu = GMENU_LAUNCH;
-			break;
-		case 8:
-			gmenu = GMENU_SAVE;
-			break;
-		}
-	}
+		gmenu = (GameMenu)(gmenux + GMENU_MAP);
 }
 
 void gmenu_nav(signed char dx)

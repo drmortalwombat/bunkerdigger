@@ -62,7 +62,10 @@ char BunkerMapData[] = {
 };
 #endif
 
+#pragma bss(ybss)
 char BunkerMapData[256];
+char TileMapFlags[256];
+#pragma bss(bss)
 
 #pragma align(BunkerHiresData, 256)
 #pragma align(BunkerColor0Data, 256)
@@ -456,7 +459,7 @@ void tile_cursor_show(char x, char y)
 	__assume(y < 3);
 	__assume(x < 3);
 
-	char * hp0 = Hires + 320 * (y * 8) + (x * 8) * 8;
+	char * hp0 = HiresRow[y * 8] + (x * 8) * 8;
 	char * hp1 = hp0 + 320 * 7;
 
 	for(char i=0; i<8; i++)
@@ -477,7 +480,7 @@ void tile_cursor_hide(char x, char y)
 	__assume(y < 3);
 	__assume(x < 3);
 
-	char * hp0 = Hires + 320 * (y * 8) + (x * 8) * 8;
+	char * hp0 =  HiresRow[y * 8] + (x * 8) * 8;
 	char * hp1 = hp0 + 320 * 7;
 
 	for(char i=0; i<8; i++)
@@ -490,9 +493,10 @@ void tile_cursor_hide(char x, char y)
 }
 
 
-
+#pragma bss(ybss)
 char queue[256];
 signed char dist[256];
+#pragma bss(bss)
 
 char tile_plan(char si, char di)
 {

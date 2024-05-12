@@ -48,6 +48,8 @@ const char room_names[16 * 10 + 1] =
 	"CENTRIFUGE"
 	"LAUNCH    ";
 
+#pragma align(room_names, 256)
+
 __striped Construction		room_constructions[4];
 char						room_num_construction;
 

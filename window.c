@@ -1,5 +1,6 @@
 #include "window.h"
 #include "tiles.h"
+#include "gameirq.h"
 
 char story_shown, story_pending;
 
@@ -10,9 +11,12 @@ void story_init(void)
 }
 
 const char * StoryMessageTexts[] = {
-	"\x01AFTER THE FINAL WAR YOU FIND\n"
-	"YOURSELF IN AN UNDERGROUND\n"
-	"SHELTER, TRYING TO SURVIVE.\n\n"
+	"\x01IF YOU CAN READ THIS, WE MUST\n"
+	"HAVE WON THE WAR.\n"
+	"\x01WELL AT LEAST KIND OF.\n"
+	"\x01THIS SHELTER WITH ITS ROOMS\n"
+	"AND MINESHAFTS WILL BRING\n"
+	"GLORY TO OUR NATION.\n"
 	"\x01OTHER DWELLERS ARE IN\n"
 	"HIBERNATION, READY TO BE\n"
 	"AWOKEN.\n\x01\x01\x01",
@@ -216,8 +220,57 @@ char window_write_uint(char x, char y, unsigned u)
 }
 
 
+static const char wmand[] = {
+	0xff, 0xff, 0xff, 0xff, 0xf0, 0xf0, 0xf0, 0xf0,
+	0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xff, 0xff, 0x0f, 0x0f, 0x0f, 0x0f,
+
+	0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	0x0c, 0x03, 0x0c, 0x03, 0x0c, 0x03, 0x0c, 0x03,
+
+	0xf0, 0xf0, 0xf0, 0xf0, 0xff, 0xff, 0xff, 0xff,
+	0x00, 0x00, 0x00, 0x00, 0xcc, 0x33, 0xcc, 0x33,
+	0x0c, 0x03, 0x0c, 0x03, 0xcc, 0x33, 0xcc, 0x33,
+};
+
+static const char wmor[] = {
+	0x00, 0x00, 0x00, 0x00, 0x05, 0x05, 0x04, 0x04,
+	0x00, 0x00, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x50, 0x50, 0x10, 0x10,
+
+	0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+	0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+
+	0x04, 0x04, 0x05, 0x05, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x55, 0x55, 0x00, 0x00, 0x00, 0x00,
+	0x10, 0x10, 0x50, 0x50, 0x00, 0x00, 0x00, 0x00
+};
+
+void window_mask(char * dp, char mi)
+{
+	for(char i=0; i<8; i++)
+		dp[i] = (dp[i] & wmand[mi + i]) | wmor[mi + i];
+}
+
+void window_mask3(char * dp, char mi, char w)
+{
+	window_mask(dp, mi);
+	dp += 8;
+	mi += 8;
+
+	__assume(w > 0);
+	for(char i=0; i<w; i++)
+	{
+		window_mask(dp, mi);
+		dp += 8;
+	}
+	mi += 8;
+	window_mask(dp, mi);
+}
+
 void window_open(char x, char y, char w, char h)
 {
+	irqphase = IRQP_WINDOW;
 	vic.spr_enable = 0x00;
 
 	winX = x;
@@ -225,7 +278,7 @@ void window_open(char x, char y, char w, char h)
 	winW = w;
 	winH = h;
 
-	winP = Hires + 320 * winY + 8 * winX;
+	winP = HiresRow[winY] + 8 * winX;
 	winS = Screen + 40 * winY + winX;
 
 	char	*	wp = winP - 328;
@@ -233,26 +286,10 @@ void window_open(char x, char y, char w, char h)
 	// Draw top border of window
 
 	char	*	tp = wp;
-	tp[4] = (tp[4] & 0xf0) | 0x05;
-	tp[5] = (tp[5] & 0xf0) | 0x05;
-	tp[6] = (tp[6] & 0xf0) | 0x04;
-	tp[7] = (tp[7] & 0xf0) | 0x04;
 
-	tp += 8;
-	for(char i=0; i<w; i++)
-	{
-		tp[4] = 0x55;
-		tp[5] = 0x55;
-		tp[6] = 0x00;
-		tp[7] = 0x00;
-		tp += 8;
-	}
+	window_mask3(tp, 0, w);
 
-	tp[4] = (tp[4] & 0x0f) | 0x50;
-	tp[5] = (tp[5] & 0x0f) | 0x50;
-	tp[6] = (tp[6] & 0x0f) | 0x10;
-	tp[7] = (tp[7] & 0x0f) | 0x10;
-
+	char w8 = w * 8;
 	wp += 320;
 	for(char i=0; i<h; i++)
 	{
@@ -260,26 +297,19 @@ void window_open(char x, char y, char w, char h)
 
 		// Draw left border
 
-		for(char j=0; j<8; j++)
-			tp[j] = (tp[j] & 0xf0) | 0x04;
+
+		window_mask(tp, 24);
 
 		// Clear center area
 
 		tp += 8;
-		for(char k=0; k<w; k++)
-		{
-			for(char j=0; j<8; j++)
-				tp[j] = 0x00;
-			tp += 8;
-		}
+		for(char k=0; k<w8; k++)
+			tp[k] = 0x00;
+		tp += w8;
 
 		// Draw right border and shadow
 
-		for(char j=0; j<8; j+=2)
-		{
-			tp[j + 0] = (tp[j + 0] & 0x0c) | 0x10;
-			tp[j + 1] = (tp[j + 1] & 0x03) | 0x10;
-		}
+		window_mask(tp, 32);
 
 		wp += 320;
 	}
@@ -287,38 +317,15 @@ void window_open(char x, char y, char w, char h)
 	// Draw bottom border and shadow
 	
 	tp = wp;
-	tp[0] = (tp[0] & 0xf0) | 0x04;
-	tp[1] = (tp[1] & 0xf0) | 0x04;
-	tp[2] = (tp[2] & 0xf0) | 0x05;
-	tp[3] = (tp[3] & 0xf0) | 0x05;
-
-	tp += 8;
-	for(char i=0; i<w; i++)
-	{
-		tp[0] = 0x00;
-		tp[1] = 0x00;
-		tp[2] = 0x55;
-		tp[3] = 0x55;
-		tp[4] &= 0xcc;
-		tp[5] &= 0x33;
-		tp[6] &= 0xcc;
-		tp[7] &= 0x33;
-		tp += 8;
-	}
-
-	tp[0] = (tp[0] & 0x0c) | 0x10;
-	tp[1] = (tp[1] & 0x03) | 0x10;
-	tp[2] = (tp[2] & 0x0c) | 0x50;
-	tp[3] = (tp[3] & 0x03) | 0x50;
-	tp[4] &= 0xcc;
-	tp[5] &= 0x33;
-	tp[6] &= 0xcc;
-	tp[7] &= 0x33;
+	window_mask3(tp, 40, w);
 
 	char	*	sp = Screen + 40 * winY + winX - 41;
 	char	*	cp = Color + 40 * winY + winX - 41;
 
-	for(char i=0; i<w+2; i++)
+	__assume(w < 40);
+	__assume(w > 0);
+
+	for(signed char i=w+1; i>=0; i--)
 		sp[i] = (sp[i] & 0x0f) | 0x10;
 
 	sp += 40;
@@ -326,24 +333,25 @@ void window_open(char x, char y, char w, char h)
 	for(char i=0; i<h; i++)
 	{
 		sp[0] = (sp[0] & 0x0f) | 0x10;
-		for(char j=0; j<w; j++)
+		for(char j=w; j>0; j--)
 		{
-			sp[j + 1] = 0x5d;
-			cp[j + 1] = 0x00;
+			sp[j] = 0x5d;
+			cp[j] = 0x00;
 		}		
 		sp[w + 1] = (sp[w + 1] & 0x0f) | 0x10;
 		sp += 40;
 		cp += 40;
 	}
 
-	for(char i=0; i<w+2; i++)
+	for(signed char i=w+1; i>=0; i--)
 		sp[i] = (sp[i] & 0x0f) | 0x10;
 
-	window_fill(0x00);
+//	window_fill(0x00);
 }
 
 void window_close(void)
 {
 	tmapmode = TMMODE_REDRAW;
+	irqphase = IRQP_MOVE_DIGGER;
 }
 

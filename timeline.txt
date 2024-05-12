@@ -1,3 +1,20 @@
+After a nuclear war, the last survivers of your
+glorious nation are locked away in an underground 
+shelter.  Most of your group are in hibernation,
+and will be woken, when appropriate quarters
+are built.
+
+Your task is to rebuild our nation, by creating
+a flourishing underground community.  You will
+achieve this by digging shats, building various
+rooms, mine resources and fight enemies you
+may encounter deep underground.
+
+Rumours have it, that there may be survivours
+on the surface or even some enemy base
+somewhere.
+
+
 
 // Buildings and resources
 //  Quarters -> Diggers

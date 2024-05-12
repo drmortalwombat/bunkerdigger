@@ -22,14 +22,18 @@
 #include "window.h"
 #include <c64/iecbus.h>
 
-#pragma stacksize(512)
+#pragma stacksize(128)
 
 #pragma section(resources, 0)
+#pragma section(xbss, 0, , , bss)
+#pragma section(ybss, 0, , , bss)
 
 #pragma region( main, 0x0880, 0xa000, , , {code, data, bss, heap})
-#pragma region( stack, 0x0400, 0x0600, , , {stack})
+#pragma region( stack, 0x0800, 0x0880, , , {stack})
 #pragma region( resources, 0xc000, 0xd000, , , {resources})
 #pragma region( zeropage, 0x80, 0xf8, , , {zeropage})
+#pragma region( xbss, 0x0400, 0x0800, , , {xbss})
+#pragma region( ybss, 0xc000, 0xc800, , , {ybss})
 
 #pragma data(resources)
 
@@ -178,6 +182,7 @@ int main(void)
 
 	diggers_init();
 	enemies_init();
+	disp_init();
 
 	gameirq_init();
 
@@ -214,8 +219,8 @@ int main(void)
 
 	for(;;)
 	{
-//		if (time_count == 10)
-//			StoryPending |= 15; //1 << STM_INTRO;
+		if (time_count >= 10)
+			story_pending |= 1 << STM_INTRO;
 
 		if (tune_queue == tune_current)
 		{
@@ -236,9 +241,12 @@ int main(void)
 
 		if (tmapmode == TMMODE_REDRAW)
 		{
-			vic.spr_enable = 0x00;
-			mapx = tmapx;
-			mapy = tmapy;
+			if (mapx != tmapx || mapy != tmapy)
+			{
+				vic.spr_enable = 0x00;
+				mapx = tmapx;
+				mapy = tmapy;
+			}
 			tiles_draw(mapx, mapy);
 			msg_refresh();
 			if (statusview == STVIEW_MINIMAP)

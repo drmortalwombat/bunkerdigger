@@ -38,6 +38,9 @@ void user_interaction(void)
 
 __interrupt void irq_lower(void)
 {
+	if (irqphase == IRQP_WINDOW)
+		return;
+	
 //	vic.color_border = VCOL_GREEN;
 	vspr_update();
 	if (irqphase == IRQP_UPDATE_SPRITE)
@@ -89,6 +92,8 @@ __interrupt void irq_upper(void)
 		break;
 	case IRQP_USER_INPUT:
 		user_interaction();
+		break;
+	case IRQP_WINDOW:
 		break;
 	}
 

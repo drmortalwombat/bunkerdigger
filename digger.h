@@ -38,7 +38,7 @@ struct Digger
 	volatile DiggerState	state;
 	DiggerTask				task;
 	volatile char			count;
-	char					target, enemy;
+	char					target, enemy, warn;
 	char					ability, fight, intelligence, health;
 };
 

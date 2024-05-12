@@ -4,6 +4,7 @@
 enum EnemyState
 {
 	ES_FREE,
+	ES_VANISHING,
 	ES_DEAD,
 	ES_IDLE,
 	ES_MOVE_RIGHT,

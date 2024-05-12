@@ -161,7 +161,7 @@ void res_update(void)
 
 	for(char i=0; i<32; i++)
 	{
-		if (diggers[i].state != DS_FREE)
+		if (diggers[i].state >= DS_IDLE)
 		{
 			if (diggers[i].state == DS_WORKING)
 			{
@@ -213,6 +213,7 @@ void res_update(void)
 				res_stored[RES_WATER]--;
 			else if (diggers[j].health > 0)
 			{
+				diggers[j].warn = 16;
 				diggers[j].health--;			
 				diggerchanged = true;
 			}
@@ -224,6 +225,7 @@ void res_update(void)
 	{		
 		if (diggers[i].state != DS_FREE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
 		{
+			diggers[i].warn = 16;
 			diggers[i].health--;
 			diggerchanged = true;
 		}

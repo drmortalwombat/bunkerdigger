@@ -1,7 +1,12 @@
 #include "enemies.h"
 #include "tiles.h"
 #include "digger.h"
+#include "gamemenu.h"
 #include <c64/vic.h>
+
+#pragma bss(xbss)
+__striped Enemy	enemies[8];
+#pragma bss(bss)
 
 char enemies_throttle;
 
@@ -16,6 +21,24 @@ void enemies_move(void)
 {
 	for(char i=0; i<8; i++)
 	{	
+		if (statusview == STVIEW_MINIMAP && enemies[i].state != ES_FREE)
+		{
+			char dx = enemies[i].tx;
+			char dy = enemies[i].ty;
+			char sx = enemies[i].sx >> 2;
+			char sy = enemies[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + (8 * dx + 2 * sy);
+
+			char m = ~(0xc0 >> 2 * sx);
+			dp[0] &= m;
+			dp[1] &= m;
+		}
+
 		switch(enemies[i].state)
 		{
 		case ES_MOVE_RIGHT:
@@ -54,20 +77,26 @@ void enemies_move(void)
 			break;		
 		case ES_ATTACK_RIGHT:
 		case ES_ATTACK_LEFT:
-			if (!--enemies[i].count)
-			{
-				enemies[i].state = ES_IDLE;
-				enemies[i].mi &= ~1;
-				enemies[i].sx = 8;
-			}
-			else if (enemies[i].count & 1)
+			enemies[i].count--;
+
+			if (!(enemies[i].count & 3))
 			{
 				if (diggers[enemies[i].target].health >= enemies[i].damage)
+				{
+					diggers[enemies[i].target].warn = 16;
 					diggers[enemies[i].target].health -= enemies[i].damage;
+				}
 				else
 					diggers[enemies[i].target].health = 0;
 
 				enemies[i].mi ^= 1;
+			}
+
+			if (!enemies[i].count)
+			{
+				enemies[i].state = ES_IDLE;
+				enemies[i].mi &= ~1;
+				enemies[i].sx = 8;
 			}
 			break;
 		case ES_DEAD:
@@ -77,14 +106,35 @@ void enemies_move(void)
 		case ES_IDLE:
 			enemies[i].mi &= 0xf8;
 			break;
+		case ES_VANISHING:
+			enemies[i].state = ES_FREE;
+			break;
 		}
+
+		if (statusview == STVIEW_MINIMAP && enemies[i].state != ES_FREE)
+		{
+			char dx = enemies[i].tx;
+			char dy = enemies[i].ty;
+			char sx = enemies[i].sx >> 2;
+			char sy = enemies[i].sy >> 2;
+
+			__assume(dx < 16);
+			__assume(sx < 16);
+			__assume(sy < 16);
+
+			char * dp = MinimapHiresTab[dy] + 8 * dx + 2 * sy;
+
+			char m = 0xaa & (0xc0 >> 2 * sx);
+			dp[0] |= m;
+			dp[1] |= m;
+		}		
 	}
 }
 
 static const struct EnemyType
 {
 	char	mi, color, health, damage;	
-}	EnemieProgression[] = {
+}	EnemyProgression[] = {
 	{0x60, VCOL_BROWN,      0x10, 0x01},
 	{0x68, VCOL_YELLOW,     0x08, 0x03},
 	{0x60, VCOL_DARK_GREY,  0x20, 0x01},
@@ -108,12 +158,12 @@ void enemy_spawn(char ei)
 		enemies[ei].ty = ri >> 4; 
 		enemies[ei].sy = 8;
 		enemies[ei].sx = 8;
-		enemies[ei].mi = EnemieProgression[et].mi;
-		enemies[ei].color = EnemieProgression[et].color;
+		enemies[ei].mi = EnemyProgression[et].mi;
+		enemies[ei].color = EnemyProgression[et].color;
 		enemies[ei].state = ES_IDLE;
 		enemies[ei].target = 0xff;
-		enemies[ei].health = EnemieProgression[et].health;
-		enemies[ei].damage = EnemieProgression[et].damage;
+		enemies[ei].health = EnemyProgression[et].health;
+		enemies[ei].damage = EnemyProgression[et].damage;
 	}
 }
 
@@ -164,7 +214,7 @@ void enemies_iterate(char frames)
 		{
 		case ES_DEAD:
 			if (enemies[i].count == 0)
-				enemies[i].state = ES_FREE;
+				enemies[i].state = ES_VANISHING;
 			break;
 		case ES_FREE:
 			ei = i;
@@ -193,7 +243,7 @@ void enemies_iterate(char frames)
 				}
 				break;
 			case 16:
-				enemies[i].state = ES_FREE;
+				enemies[i].state = ES_VANISHING;
 				break;
 			default:
 				enemy_attack(i);

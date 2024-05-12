@@ -4,7 +4,10 @@ const char FontHiresData[] = {
 	#embed ctm_chars "colorfont.ctm"
 };
 
+char FontHiresMask[512];
+
 #pragma align(FontHiresData, 256)
+#pragma align(FontHiresMask, 256)
 
 __striped char * const HiresRow[25] = {
 	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320, Hires +  4 * 320,
@@ -13,6 +16,29 @@ __striped char * const HiresRow[25] = {
 	Hires + 15 * 320, Hires + 16 * 320, Hires + 17 * 320, Hires + 18 * 320, Hires + 19 * 320,
 	Hires + 20 * 320, Hires + 21 * 320, Hires + 22 * 320, Hires + 23 * 320, Hires + 24 * 320,
 };
+
+void disp_init(void)
+{
+	const char * sp = FontHiresData;
+	char * mp = FontHiresMask;
+
+	for(char i=0; i<64; i++)
+	{
+		char m = 0;
+		for(char j=0; j<8; j++)
+		{
+			char c = sp[j] ^ 0xff;
+			c = (c | (c << 1)) & 0xaa;
+			c |= c >> 1;
+			c |= c >> 2;
+			mp[j] = ~c & ~m;
+			m = c;
+		}
+
+		sp += 8;
+		mp += 8;
+	}
+}
 
 void disp_fill(char x, char y, char w, char h, char back)
 {
@@ -233,6 +259,34 @@ void disp_bbar(char x, char y, char w)
 	hp += 16;
 	for(char i=1; i<7; i++)
 		hp[i] &= 0x3f;
+}
+
+void disp_chars_msg(char y, const char * text, char n, char back, char color)
+{
+	__assume(y < 25);
+
+	char * hp = HiresRow[y];
+	char * sp = Screen + 40 * y;
+
+	for(char i=0; i<n; i++)
+	{
+		char c = text[i];
+		if (c != ' ')
+		{
+			const char * shp = FontHiresData + 8 * c;
+			const char * mhp = FontHiresMask + 8 * c;
+
+			for(signed char j=7; j>=0; j--)
+			{
+				char c = shp[j] ^ 0xff;
+				char m = mhp[j];
+				hp[j] = (hp[j] & m) | c;
+			}
+
+			sp[i] = 0x1c;
+		}
+		hp += 8;
+	}	
 }
 
 
