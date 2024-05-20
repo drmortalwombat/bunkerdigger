@@ -186,7 +186,7 @@ void gmenu_joy(signed char dx, signed char dy)
 				do
 				{
 					di--;
-				} while (diggers[di].state == DS_FREE && di > 0);
+				} while (diggers[di].state <= DS_DEAD && di > 0);
 			}
 		}
 		else if (dx > 0)
@@ -196,7 +196,7 @@ void gmenu_joy(signed char dx, signed char dy)
 				do
 				{
 					di++;
-				} while (diggers[di].state == DS_FREE && di < 31);				
+				} while (diggers[di].state <= DS_DEAD && di < 31);				
 			}
 		}
 		else if (dy < 0)
@@ -206,7 +206,7 @@ void gmenu_joy(signed char dx, signed char dy)
 				do
 				{
 					di-=2;
-				} while (diggers[di].state == DS_FREE && di > 0);
+				} while (diggers[di].state <= DS_DEAD && di > 0);
 			}
 		}
 		else if (dy > 0)
@@ -216,11 +216,11 @@ void gmenu_joy(signed char dx, signed char dy)
 				do
 				{
 					di+=2;
-				} while (diggers[di].state == DS_FREE && di < 30);
+				} while (diggers[di].state <= DS_DEAD && di < 30);
 			}
 		}
 
-		if (di != diggeri && diggers[di].state != DS_FREE)
+		if (di != diggeri && diggers[di].state > DS_DEAD)
 		{
 			diggeri = di;
 			diggerchanged = true;

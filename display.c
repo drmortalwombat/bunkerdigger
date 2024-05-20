@@ -10,11 +10,15 @@ char FontHiresMask[512];
 #pragma align(FontHiresMask, 256)
 
 __striped char * const HiresRow[25] = {
-	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320, Hires +  4 * 320,
-	Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320, Hires +  8 * 320, Hires +  9 * 320,
-	Hires + 10 * 320, Hires + 11 * 320, Hires + 12 * 320, Hires + 13 * 320, Hires + 14 * 320,
-	Hires + 15 * 320, Hires + 16 * 320, Hires + 17 * 320, Hires + 18 * 320, Hires + 19 * 320,
-	Hires + 20 * 320, Hires + 21 * 320, Hires + 22 * 320, Hires + 23 * 320, Hires + 24 * 320,
+#for(i, 25)	Hires +  i * 320,
+};
+
+__striped char * const ScreenRow[25] = {
+#for(i, 25)	Screen +  i * 40,
+};
+
+__striped char * const ColorRow[25] = {
+#for(i, 25)	Color +  i * 40,
 };
 
 void disp_init(void)
@@ -296,8 +300,8 @@ void disp_chars(char x, char y, const char * text, char n, char back, char color
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 
 	for(char i=0; i<n; i++)
 	{
@@ -318,8 +322,8 @@ void disp_space(char x, char y, char n, char back, char color)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 
 	for(char i=0; i<n; i++)
 	{
@@ -339,16 +343,17 @@ void disp_char(char x, char y, char ch, char back, char color)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
 
 	const char * shp = FontHiresData + 8 * ch;
 	#pragma unroll(full)
 	for(char j=0; j<8; j++)
 		hp[j] = shp[j];
 
-	sp[0] = color;
-	cp[0] = back;
+	char * sp = ScreenRow[y];
+	char * cp = ColorRow[y];
+
+	sp[x] = color;
+	cp[x] = back;
 }
 
 void disp_menu(char x, const char * text, char back, char color, char colork)

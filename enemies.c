@@ -81,13 +81,20 @@ void enemies_move(void)
 
 			if (!(enemies[i].count & 3))
 			{
-				if (diggers[enemies[i].target].health >= enemies[i].damage)
+				char ti = enemies[i].target;
+				char def = diggers[ti].fight >> 2;
+
+				if (enemies[i].damage > def)
 				{
-					diggers[enemies[i].target].warn = 16;
-					diggers[enemies[i].target].health -= enemies[i].damage;
+					char dmg = enemies[i].damage - def;
+					if (diggers[ti].health > dmg)
+					{
+						diggers[ti].warn = 16;
+						diggers[ti].health -= dmg;
+					}
+					else
+						diggers[ti].health = 0;
 				}
-				else
-					diggers[enemies[i].target].health = 0;
 
 				enemies[i].mi ^= 1;
 			}
@@ -147,23 +154,26 @@ static const struct EnemyType
 
 void enemy_spawn(char ei)
 {
-	char ri = rand() & 255;
-	char tf = TileFlags[BunkerMapData[ri]];
-	if ((tf & TF_BUNKER) && (tf & (TF_LEFT | TF_RIGHT)))
+	if (time_days >= 2)
 	{
-		char et = (rand() & 127) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
-		if (et > 7) et = 7;
+		char ri = rand() & 255;
+		char tf = TileFlags[BunkerMapData[ri]];
+		if ((tf & TF_BUNKER) && (tf & (TF_LEFT | TF_RIGHT)))
+		{
+			char et = (rand() & 127) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
+			if (et > 7) et = 7;
 
-		enemies[ei].tx = ri & 0x0f;
-		enemies[ei].ty = ri >> 4; 
-		enemies[ei].sy = 8;
-		enemies[ei].sx = 8;
-		enemies[ei].mi = EnemyProgression[et].mi;
-		enemies[ei].color = EnemyProgression[et].color;
-		enemies[ei].state = ES_IDLE;
-		enemies[ei].target = 0xff;
-		enemies[ei].health = EnemyProgression[et].health;
-		enemies[ei].damage = EnemyProgression[et].damage;
+			enemies[ei].tx = ri & 0x0f;
+			enemies[ei].ty = ri >> 4; 
+			enemies[ei].sy = 8;
+			enemies[ei].sx = 8;
+			enemies[ei].mi = EnemyProgression[et].mi;
+			enemies[ei].color = EnemyProgression[et].color;
+			enemies[ei].state = ES_IDLE;
+			enemies[ei].target = 0xff;
+			enemies[ei].health = EnemyProgression[et].health;
+			enemies[ei].damage = EnemyProgression[et].damage;
+		}
 	}
 }
 
@@ -224,9 +234,9 @@ void enemies_iterate(char frames)
 			char ti = enemies[i].ty * 16 + enemies[i].tx;
 			char tf = TileFlags[BunkerMapData[ti]];
 
-			switch (rand() & 63)
+			switch (rand() & 255)
 			{
-			case 0 ... 7:
+			case 0 ... 31:
 				if (enemies[i].tx > 0 && (tf & TF_LEFT))
 				{
 					enemies[i].count = 16;
@@ -234,7 +244,7 @@ void enemies_iterate(char frames)
 					enemies[i].state = ES_MOVE_LEFT;
 				}
 				break;
-			case 8 ... 15:
+			case 32 ... 63:
 				if (enemies[i].tx < 15 && (tf & TF_RIGHT))
 				{
 					enemies[i].count = 16;
@@ -242,7 +252,8 @@ void enemies_iterate(char frames)
 					enemies[i].state = ES_MOVE_RIGHT;
 				}
 				break;
-			case 16:
+			case 64:
+			case 65:
 				enemies[i].state = ES_VANISHING;
 				break;
 			default:
@@ -253,11 +264,11 @@ void enemies_iterate(char frames)
 		}
 	}
 
-	while ((char)(frames - enemies_throttle) >= 32)
+	while ((char)(frames - enemies_throttle) >= 64)
 	{
 		if (ei != 0xff)
 			enemy_spawn(ei);
-		enemies_throttle += 32;
+		enemies_throttle += 64;
 	}
 }
 

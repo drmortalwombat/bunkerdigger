@@ -8,7 +8,15 @@ extern char story_shown, story_pending;
 enum StoryMessages
 {
 	STM_INTRO,
+
+	STM_LOW_WATER,
+	STM_LOW_ENERGY,
+	STM_LOW_AIR,
+
+	STM_DIGGING_ROCK,
+	
 	STM_RADIO_INVITES,
+	STM_ENEMY_MESSAGE,
 	STM_ENEMY_THREADS,
 	SIM_MOON_DESTROYED,
 

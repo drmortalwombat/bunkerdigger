@@ -1,5 +1,6 @@
 #include "tiles.h"
 #include "display.h"
+#include "window.h"
 
 const char BunkerHiresData[] = {
 	#embed ctm_chars "bunkerbm.ctm"
@@ -238,7 +239,10 @@ bool tile_expand(char x, char y, char flags)
 bool tile_dig(char x, char y)
 {
 	if (TileMapFlags[16 * y + x] == GTYPE_ROCK && !room_count[RTILE_EXCAVATOR])
+	{
+		story_pending |= 1 << STM_DIGGING_ROCK;
 		return false;
+	}
 
 	if (tile_is_bunker(x, y) || tile_is_room(x, y))
 		return false;

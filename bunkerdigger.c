@@ -7,6 +7,7 @@
 #include <c64/joystick.h>
 #include <c64/rasterirq.h>
 #include <c64/keyboard.h>
+#include <c64/sid.h>
 #include <stdlib.h>
 #include "display.h"
 #include "tiles.h"
@@ -49,10 +50,14 @@ void game_save(void)
 
 	__asm { sei }
 
+	sid.voices[0].ctrl = 0;
+	sid.voices[1].ctrl = 0;
+	sid.voices[2].ctrl = 0;
+
 	iec_open(drive, 2, "@0:DIGGER,P,W");
 	iec_listen(drive, 2);
 
-	iec_write(0x23);
+	iec_write(0x24);
 	if (iec_status == IEC_OK)
 	{
 		iec_write(time_count);
@@ -66,6 +71,7 @@ void game_save(void)
 		iec_write(rooms_blueprints);
 		iec_write(radio_count);
 		iec_write(radio_days);
+		iec_write(enemy_days);
 		iec_write(researching);
 		iec_write_bytes((char *)&room_constructions, sizeof(room_constructions));
 		iec_write_bytes((char *)&res_oxygen, sizeof(res_oxygen));
@@ -93,6 +99,10 @@ void game_load(void)
 
 	__asm { sei }
 
+	sid.voices[0].ctrl = 0;
+	sid.voices[1].ctrl = 0;
+	sid.voices[2].ctrl = 0;
+
 	iec_open(drive, 2, "@0:DIGGER,P,R");
 	iec_talk(drive, 2);
 	char v = iec_read();
@@ -109,6 +119,8 @@ void game_load(void)
 		rooms_blueprints = iec_read();
 		radio_count = iec_read();
 		radio_days = iec_read();
+		if (v >= 0x24)
+			enemy_days = iec_read();
 		researching = iec_read();
 		iec_read_bytes((char *)&room_constructions, sizeof(room_constructions));
 		iec_read_bytes((char *)&res_oxygen, sizeof(res_oxygen));
@@ -221,6 +233,9 @@ int main(void)
 	{
 		if (time_count >= 10)
 			story_pending |= 1 << STM_INTRO;
+		if (time_days > enemy_days + 2)
+			story_pending |= 1 << STM_ENEMY_THREADS;
+
 
 		if (tune_queue == tune_current)
 		{
@@ -256,16 +271,16 @@ int main(void)
 		}
 		else if (diggerchanged)
 		{
+			diggerchanged = false;
 			if (statusview == STVIEW_TEAM)
 				diggers_list();
-			diggerchanged = false;
 		}
 		else if (buildingchanged)
 		{
+			buildingchanged = false;
 			rooms_count();				
 			if (statusview == STVIEW_BUILD)
 				rooms_display();
-			buildingchanged = false;
 		}
 		else if (researching == 0 && rooms_researched < rooms_blueprints)
 		{

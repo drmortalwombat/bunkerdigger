@@ -1,6 +1,7 @@
 #include "window.h"
 #include "tiles.h"
 #include "gameirq.h"
+#include <c64/keyboard.h>
 
 char story_shown, story_pending;
 
@@ -21,6 +22,21 @@ const char * StoryMessageTexts[] = {
 	"HIBERNATION, READY TO BE\n"
 	"AWOKEN.\n\x01\x01\x01",
 
+	"\x01A LACK OF FRESH WATER WILL\n"
+	"KILL YOUR DWELLERS\n\x01\x01\x01",
+
+	"\x01WE NEED MORE GENERATORS TO\n"
+	"KEEP UP WITH OUR DEMANDS.\n\x01\x01\x01",
+
+	"\x01THERE IS A LACK OF VENTILATION\n"
+	"IN THE LOWER FLOORS OF YOUR\n"
+	"BUNKER.\n\x01\x01\x01",
+
+	"\x01THIS ROCK IS TOO HARD FOR\n"
+	"OUR SHOVELS AND PICKAXES.\n\n"
+	"\x01WE MAY NEED SOMETHING MORE\n"
+	"POWERFUL FOR THIS.\n\x01\x01\x01",
+
 	"\x01THERE ARE NO MORE DWELLERS\n"
 	"IN HIBERNATION.\n\n"
 	"\x01WE SHOULD USE THE RADIO TO\n"
@@ -28,9 +44,16 @@ const char * StoryMessageTexts[] = {
 	"SURFACE TO JOIN OUR TEAM.\n\x01\x01\x01",
 
 	"\x01WE PICKED UP A STRANGE RADIO\n"
-	"MESSAGE. IT APPEARS THE\n"
-	"ENEMY HAS SURVIVED ON A\n"
-	"SECRET MOON BASE.\n\n"
+	"MESSAGE. IT APPEARS A FACTION\n"
+	"HAS SURVIVED ON A SECRET MOON\n"
+	"BASE.\n\n"
+	"\x01WE WILL TRY TO CONTACT THEM\n"
+	"FOR MORE BLUEPRINTS\n\x01\x01\x01",
+
+	"\x01THE GROUP ON THE MOON TURNED\n"
+	"OUT TO BE THE ENEMY, THEY\n"
+	"THREATEN US WITH A BUNKER\n"
+	"BUSTER.\n\n"
 	"\x01WE MUST STOP THEM, BEFORE\n"
 	"THEY DESTROY US COMPLETELY.\n\x01\x01\x01",
 
@@ -136,6 +159,18 @@ void window_scroll(void)
 		wp[x] = 0;
 }
 
+bool window_check_close(char delay)
+{
+	for(char i=0; i<delay; i++)
+	{
+		keyb_poll();
+
+		if (keyb_key == (KSCAN_QUAL_DOWN | KSCAN_SPACE))
+			return true;
+		vic_waitFrame();
+	}
+	return false;
+}
 
 void window_print(const char * text)
 {
@@ -158,15 +193,22 @@ void window_print(const char * text)
 			*sp = 0xd1;
 			for(char j=0; j<8; j++)
 				wp[j] = 0xaa;
+			if (psp)
+				*psp = 0x5d;
+			
 			for(char j=0; j<5; j++)
 			{
-				vic_waitFrames(4);			
+				if (window_check_close(4))
+					return;
 				*sp = 0x5d;
-				vic_waitFrames(4);			
+				if (window_check_close(4))
+					return;
 				*sp = 0x00;
-				vic_waitFrames(4);			
+				if (window_check_close(4))
+					return;
 				*sp = 0x5d;
-				vic_waitFrames(4);			
+				if (window_check_close(4))
+					return;
 				*sp = 0xd1;
 			}
 		}
@@ -175,13 +217,18 @@ void window_print(const char * text)
 			*sp = 0xd1;
 			for(char j=0; j<8; j++)
 				wp[j] = 0xaa;
-			vic_waitFrame();			
+
+			if (window_check_close(1))
+				return;
 
 			const char * cp = FontHiresData + 8 * (c & 0x3f);
 
 			for(char j=0; j<8; j++)
 				wp[j] = cp[j];
-			vic_waitFrame();
+
+			if (window_check_close(1))
+				return;
+
 			if (psp)
 				*psp = 0x5d;
 			psp = sp;

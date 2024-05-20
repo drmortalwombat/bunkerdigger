@@ -4,6 +4,7 @@
 #include "display.h"
 #include "messages.h"
 #include "rooms.h"
+#include "window.h"
 
 signed char	res_oxygen[16];
 char		res_stored[NUM_RESOURCES];
@@ -76,15 +77,20 @@ void res_generate(char di)
 			break;
 		case RTILE_RADIO:
 			radio_count += (diggers[di].ability + 3) >> 2;
-			if (radio_count > 128)
+			if (radio_count > 64)
 			{
-				radio_count -= 128;
+				radio_count -= 64;
 				radio_days++;
 				digger_procreate(true);
-				if (rooms_blueprints < RTILE_LAUNCH_TOP + 1 && radio_days > 4 + (3 << (rooms_blueprints - RTILE_RADIO)))
+				if (rooms_blueprints < RTILE_LAUNCH_TOP + 1 && radio_days > 3 + (9 << (rooms_blueprints - RTILE_RADIO - 1)))
 				{
 					msg_queue(MSG_BLUEPRINT, rooms_blueprints);
 					rooms_blueprints++;
+				}
+				if (radio_days > 28)
+				{
+					story_pending |= 1 << STM_ENEMY_MESSAGE;
+					enemy_days = time_days;
 				}
 			}
 			break;
@@ -129,7 +135,7 @@ char digger_heal;
 char digger_water_index;
 char res_update_cnt;
 char digger_shuffle_mask;
-char time_count, time_days;
+char time_count, time_days, enemy_days;
 
 void res_init(void)
 {
@@ -142,6 +148,7 @@ void res_init(void)
 	time_changed = true;
 	radio_count = 0;
 	radio_days = 0;
+	enemy_days = 100;
 }
 
 void res_update(void)
@@ -153,6 +160,9 @@ void res_update(void)
 	res_oxygen[2] += 4;
 	res_oxygen[3] += 2;
 	res_oxygen[4] += 1;
+
+	if (res_stored[RES_ENERGY] == 0)
+		story_pending |= 1 << STM_LOW_ENERGY;
 
 	if (!(res_update_cnt & 15))
 		res_stored[RES_ENERGY] += 1;
@@ -204,15 +214,16 @@ void res_update(void)
 		}
 	}
 
-	for(char i=0; i<2; i++)
+	for(char i=0; i<4; i++)
 	{
 		char j = digger_water_index ^ digger_shuffle_mask;
-		if (diggers[j].state != DS_FREE)
+		if (diggers[j].state >= DS_IDLE)
 		{
 			if (res_stored[RES_WATER] > 0)
 				res_stored[RES_WATER]--;
 			else if (diggers[j].health > 0)
 			{
+				story_pending |= 1 << STM_LOW_WATER;
 				diggers[j].warn = 16;
 				diggers[j].health--;			
 				diggerchanged = true;
@@ -223,8 +234,9 @@ void res_update(void)
 
 	for(char i=0; i<32; i++)
 	{		
-		if (diggers[i].state != DS_FREE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
+		if (diggers[i].state >= DS_IDLE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
 		{
+			story_pending |= 1 << STM_LOW_AIR;
 			diggers[i].warn = 16;
 			diggers[i].health--;
 			diggerchanged = true;

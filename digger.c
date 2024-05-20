@@ -6,6 +6,7 @@
 #include "gamemenu.h"
 #include "messages.h"
 #include "enemies.h"
+#include "window.h"
 #include <c64/sprites.h>
 
 #pragma bss(xbss)
@@ -264,7 +265,10 @@ void diggers_move(void)
 			if (!(irqcount & 3))
 			{
 				if (!--diggers[i].count)
+				{
 					diggers[i].state = DS_FREE;
+					diggers[i].color = VCOL_DARK_GREY;
+				}
 			}
 			break;
 		case DS_DEFEND_LEFT:
@@ -280,6 +284,16 @@ void diggers_move(void)
 		case DS_IDLE:
 			diggers[i].mi = 65;
 			break;
+		}
+
+		if (statusview == STVIEW_TEAM && diggers[i].state != DS_FREE)
+		{
+			char color = VCOL_BLACK;
+			if (diggers[i].tx == cursorx && diggers[i].ty == cursory)
+				color = VCOL_WHITE;
+			else if (diggers[i].warn & 1)
+				color = VCOL_YELLOW;
+			ScreenRow[i >> 1][24 + 8 * (i & 1)] = color;
 		}
 
 		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE && !(diggers[i].warn & 1))
@@ -552,7 +566,8 @@ void diggers_vacate_room(char ri)
 			if (diggers[i].task == DTASK_MOVE || diggers[i].task == DTASK_WORK)
 			{
 				diggers[i].task = DTASK_IDLE;
-				diggers[i].state = DS_IDLE;
+				if (diggers[i].state == DS_WORKING)
+					diggers[i].state = DS_IDLE;
 				diggerchanged = true;
 			}
 		}
@@ -572,11 +587,11 @@ void diggers_list(void)
 			if (i == diggeri)
 				c = VCOL_MED_GREY;
 
-			disp_char(x + 0, y, ' ', c, VCOL_BLACK);
+			disp_char(x + 0, y, 92, c, VCOL_BLACK);
 			disp_char(x + 1, y, digger_task_char[diggers[i].task], c, VCOL_WHITE + 16 * VCOL_LT_GREY);
 			disp_vbar(x + 2, y, 8 - ((diggers[i].health + 7) >> 3), c + 16 * VCOL_LT_GREY, VCOL_LT_RED);
 			disp_chars(x + 3, y, digger_names + i * 5, 5, c, diggers[i].color + 16 * VCOL_DARK_GREY);
-			disp_char(x + 7, y, ' ', c, VCOL_BLACK);
+//			disp_char(x + 7, y, ' ', c, VCOL_BLACK);
 		}
 		else
 		{
@@ -595,13 +610,13 @@ void digger_stats(void)
 	disp_rbar(32, 21, diggers[diggeri].health >> 1, 32, 32, VCOL_LT_RED + 16 * VCOL_DARK_GREY);
 
 	disp_char(24, 22 , 'A', 0x00, 0xf1);
-	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_DARK_GREY);
+	disp_rbar(25, 22, diggers[diggeri].ability, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_YELLOW + 16 * VCOL_MED_GREY);
 
 	disp_char(29, 22 , 'F', 0x00, 0xf1);
-	disp_rbar(30, 22, diggers[diggeri].fight, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_RED + 16 * VCOL_DARK_GREY);
+	disp_rbar(30, 22, diggers[diggeri].fight, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_RED + 16 * VCOL_MED_GREY);
 
 	disp_char(34, 22 , 'I', 0x00, 0xf1);
-	disp_rbar(35, 22, diggers[diggeri].intelligence, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_BLUE + 16 * VCOL_DARK_GREY);
+	disp_rbar(35, 22, diggers[diggeri].intelligence, DIGGER_MAX_SKILL, DIGGER_MAX_SKILL, VCOL_BLUE + 16 * VCOL_MED_GREY);
 }
 
 bool digger_work(char di)
@@ -730,51 +745,59 @@ bool digger_work(char di)
 
 bool digger_procreate(bool radio)
 {
+	if (diggers_born == 12 && room_count[RTILE_QUARTERS] > 6 && !radio)
+		story_pending |= 1 << STM_RADIO_INVITES;
+
 	if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2 && diggers_born < (radio ? 32 : 12))
 	{
 		char ri = rand() & 255;
-		if (BunkerMapData[ri] == RTILE_QUARTERS + 16)
-		{
-			char di = diggers_born;
-
-			diggers[di].tx = ri & 0x0f;
-			diggers[di].ty = ri >> 4; 
-			diggers[di].sy = 8;
-			diggers[di].sx = 8;
-			diggers[di].mi = 64 + 1;
-			diggers[di].color = VCOL_LT_GREY;
-			diggers[di].state = DS_IDLE;
-			diggers[di].task = DTASK_IDLE;
-			diggers[di].target = 0;
-			diggers[di].ability = 1;
-			diggers[di].fight = 1;
-			diggers[di].intelligence = 1;
-			diggers[di].health = DIGGER_MAX_HEALTH;
-			diggers[di].enemy = 0xff;
-
-			switch (diggers_flags[di] & 0xc0)
+		do {
+			if (BunkerMapData[ri] == RTILE_QUARTERS + 16)
 			{
-			case DIF_ABILITY:
-				diggers[di].ability += diggers_flags[di] & 0x3f;
-				break;
-			case DIF_FIGHT:
-				diggers[di].fight += diggers_flags[di] & 0x3f;
-				break;
-			case DIF_INTELLIGENCE:
-				diggers[di].intelligence += diggers_flags[di] & 0x3f;
-				break;
+				char di = diggers_born;
+
+				diggers[di].tx = ri & 0x0f;
+				diggers[di].ty = ri >> 4; 
+				diggers[di].sy = 8;
+				diggers[di].sx = 8;
+				diggers[di].mi = 64 + 1;
+				diggers[di].color = VCOL_LT_GREY;
+				diggers[di].state = DS_IDLE;
+				diggers[di].task = DTASK_IDLE;
+				diggers[di].target = 0;
+				diggers[di].ability = 1;
+				diggers[di].fight = 1;
+				diggers[di].intelligence = 1;
+				diggers[di].health = DIGGER_MAX_HEALTH;
+				diggers[di].enemy = 0xff;
+
+				switch (diggers_flags[di] & 0xc0)
+				{
+				case DIF_ABILITY:
+					diggers[di].ability += diggers_flags[di] & 0x3f;
+					break;
+				case DIF_FIGHT:
+					diggers[di].fight += diggers_flags[di] & 0x3f;
+					break;
+				case DIF_INTELLIGENCE:
+					diggers[di].intelligence += diggers_flags[di] & 0x3f;
+					break;
+				}
+
+				if (radio)
+					msg_queue(MSG_DIGGER_ARRIVED, di);
+				else
+					msg_queue(MSG_DIGGER_DEHYBERNATED, di);
+
+				digger_check_color(di);
+
+				diggers_born++;
+				diggerchanged = true;
+
+				return true;
 			}
-
-			if (radio)
-				msg_queue(MSG_DIGGER_ARRIVED, di);
-			else
-				msg_queue(MSG_DIGGER_DEHYBERNATED, di);
-
-			diggers_born++;
-			diggerchanged = true;
-
-			return true;
-		}
+			ri++;
+		} while (radio);
 	}
 
 	return false;

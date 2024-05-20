@@ -58,10 +58,13 @@ void msg_queue(MessageType msg, char param)
 	msg_head++;
 	if (msg_tail + 33 == msg_head)
 		msg_tail++;
-	msg_expand(msg, param);
-	disp_chars_msg(23 - msg_row, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
-	msg_row++;
-	msg_delay = 100;
+	if (msg_row < 24)
+	{
+		msg_expand(msg, param);
+		disp_chars_msg(23 - msg_row, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
+		msg_row++;
+		msg_delay = 100;
+	}
 }
 
 void msg_refresh(void)
