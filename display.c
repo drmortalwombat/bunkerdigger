@@ -50,7 +50,7 @@ void disp_fill(char x, char y, char w, char h, char back)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * cp = Color + 40 * y + x;
+	char * cp = ColorRow[y] + x;
 
 	for(char i=0; i<h; i++)
 	{
@@ -73,8 +73,8 @@ void disp_text(char x, char y, const char * text, char back, char color)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 
 	char i = 0;
 	while (char c = text[i])
@@ -100,8 +100,8 @@ void disp_vbar(char x, char y, char h, char back, char color)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 
 
 	for(char i=0; i<h; i++)
@@ -120,8 +120,8 @@ void disp_rbar(char x, char y, char w, char total, char area, char color)
 	total >>= 2;
 	area >>= 2;
 
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 	for(char c=0; c<total; c++)
 	{
 		sp[c] = color;
@@ -190,8 +190,8 @@ void disp_bar(char x, char y, char w, char back, char color)
 	__assume(x < 40);
 
 	char * hp = HiresRow[y] + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
+	char * sp = ScreenRow[y] + x;
+	char * cp = ColorRow[y] + x;
 
 	char i = 0;
 	while (i + 4 <= w)
@@ -270,7 +270,7 @@ void disp_chars_msg(char y, const char * text, char n, char back, char color)
 	__assume(y < 25);
 
 	char * hp = HiresRow[y];
-	char * sp = Screen + 40 * y;
+	char * sp = ScreenRow[y];
 
 	for(char i=0; i<n; i++)
 	{

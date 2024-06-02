@@ -112,6 +112,10 @@ void gmenu_key(char keyb)
 		gmenu_push();
 		break;
 
+	case KSCAN_R:
+		researching = 0;
+		break;
+
 	case KSCAN_X:
 		rooms_researched = 16;
 		for(char i=0; i<NUM_RESOURCES; i++)

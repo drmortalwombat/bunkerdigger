@@ -3,6 +3,7 @@
 #include "tiles.h"
 #include "resources.h"
 #include "messages.h"
+#include "window.h"
 
 const RoomInfo		room_infos[16] = {
 	{1, 0, 0},
@@ -69,11 +70,11 @@ void rooms_count(void)
 
 	char	nstore = room_count[RTILE_STORAGE];
 
-	res_storage[RES_ENERGY] = 8 + 8 * room_count[RTILE_GENERATOR];
+	res_storage[RES_ENERGY] = 12 + 8 * room_count[RTILE_GENERATOR];
 
 	res_storage[RES_BUILDING] = 4 * room_count[RTILE_WORKBENCH];
 	res_storage[RES_HEALING] = 4 * room_count[RTILE_SICKBAY];
-	res_storage[RES_WATER] = 8 + 4 * room_count[RTILE_HYDRO];
+	res_storage[RES_WATER] = 10 + 6 * room_count[RTILE_HYDRO];
 
 	res_storage[RES_METAL] = 8 + 16 * nstore;
 	res_storage[RES_CARBON] = 4 + 8 * nstore;
@@ -83,6 +84,12 @@ void rooms_count(void)
 		(room_count[RTILE_MISSILE_TOP] + 
 		room_count[RTILE_MISSILE_MID] +
 		room_count[RTILE_MISSILE_BOTTOM]) * 16;
+
+	if (room_count[RTILE_LAUNCH_TOP] > 0 &&
+		room_count[RTILE_LAUNCH_MID] > 0 &&
+		room_count[RTILE_LAUNCH_BOTTOM] > 0)
+		story_pending |= 1 << SIM_ROCKET_BUILD;
+
 
 	for(char i=0; i<NUM_RESOURCES; i++)
 	{
@@ -187,6 +194,52 @@ bool rooms_build(void)
 	}
 
 	return false;
+}
+
+char rooms_find_rocket(char n)
+{
+	n *= 16;
+	for(char i=0; i<16; i++)
+	{
+		if (BunkerMapData[i] == TILE_ROOMS + RTILE_MISSILE_TOP)
+		{
+			char j = i + 16;
+			while (BunkerMapData[j] == TILE_ROOMS + RTILE_MISSILE_MID)
+				j += 16;
+			if (j >= n && BunkerMapData[j] == TILE_ROOMS + RTILE_MISSILE_BOTTOM)
+				return i;
+		}
+	}
+
+	return 0xff;
+}
+
+bool rooms_launch()
+{
+	if (!room_count[RTILE_MISSILE_TOP] ||
+		!room_count[RTILE_MISSILE_MID] ||
+		!room_count[RTILE_MISSILE_BOTTOM])
+		return false;
+
+	char ri = rooms_find_rocket(1);
+	if (ri == 0xff)
+		return false;
+
+	if (res_stored[RES_FUEL] < 48)
+		return false;
+
+	BunkerMapData[ri] = TILE_ROOMS + RTILE_LAUNCH_TOP;
+	char j = ri + 16;
+	while (BunkerMapData[j] == TILE_ROOMS + RTILE_MISSILE_MID)
+	{
+		BunkerMapData[j] = TILE_ROOMS + RTILE_LAUNCH_MID;
+		j += 16;
+	}
+	BunkerMapData[j] = TILE_ROOMS + RTILE_LAUNCH_BOTTOM;
+
+	res_stored[RES_FUEL] -= 48;
+
+	return true;
 }
 
 

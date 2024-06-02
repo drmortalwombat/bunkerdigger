@@ -493,7 +493,12 @@ char diggers_sprites(char si, char sx, char sy)
 			{
 				char c = diggers[i].color;
 				if (i == diggeri && (irqcount & 1))
-					c = VCOL_DARK_GREY;
+				{
+					if (irqcount & 2)
+						c = VCOL_DARK_GREY;
+					else
+						c = VCOL_WHITE;
+				}
 
 				vspr_set(si, 
 					12 + dx * 64 + diggers[i].sx * 4,

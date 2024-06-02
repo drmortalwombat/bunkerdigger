@@ -3,7 +3,7 @@
 #include "gameirq.h"
 #include <c64/keyboard.h>
 
-char story_shown, story_pending;
+unsigned story_shown, story_pending;
 
 void story_init(void)
 {
@@ -62,14 +62,45 @@ const char * StoryMessageTexts[] = {
 	"\x01UNFORTUNATELY PARTS OF IT WILL\n"
 	"HIT THE SURFACE AND ANNIHILATE\n"
 	"THIS BUNKER.\n\n"
-	"\x01 WE NEED A BIGGER ROCKET\n\x01\x01\x01",
+	"\x01   WE NEED A BIGGER ROCKET\n"
+	"   FIVE STAGES TO REACH MARS\n\x01\x01\x01",
 
+	"\x01WITH THIS PLANS, WE CAN BUILD\n"
+	"A ROCKET TO REACH AND DESTROY\n"
+	"THE MOON BASE.\n\n"
+	"\x01WE WILL NEED AT LEAST A THREE\n"
+	"STAGE ROCKET TO GET ALL THE\n"
+	"WAY.\n\x01\x01\x01",
 
+	"\x01THE LAUNCH COMPLEX IS READY.\n\n"
+	"\x01IT APPEARS THAT URANIUM IN\n"
+	"COPIOUS AMOUNTS AND SKILLED\n"
+	"ENGINEERS WILL BE NEEDED, TO\n"
+	"BUILD THE ROCKET.\n\x01\x01\x01",
+
+	"\x01THE ULTIMATE WEAPON IS NOW\n"
+	"READY TO PUT INTO SERVICE\n\n"
+	"\x01AS SOON AS YOU GIVE THE\n"
+	"LAUNCH COMMAND, OUR ENEMIES\n"
+	"WILL BE BLOWN TO PIECES.\n\x01\x01\x01",
+
+	"\x01THE LAUNCH WAS A SUCCESS!!\n\n"
+	"\x01THE ROCKET IS ON ITS WAY\n"
+	"TO ANNIHILATE THE ENEMY.\n\n"
+	"\x01VICTORY WILL FINALY BE\n"
+	"OURS!!!!!\n\x01\x01\x01",
+
+	"\x01THE ROCKET IS READY TO LEAVE\n"
+	"FOR MARS.\n\n"
+	"\x01IT IS A SHAME, WE HAVE TO\n"
+	"ESCAPE, BUT AT LEAST WE KNOW,\n"
+	"THAT THE ENEMY WILL NOT FOLLOW\n"
+	"US.\n\x01\x01\x01"
 };
 
 bool story_messages(void)
 {
-	char m = story_pending & ~story_shown;
+	unsigned m = story_pending & ~story_shown;
 	if (m)
 	{
 		StoryMessages i = 0;

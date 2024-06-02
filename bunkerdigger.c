@@ -44,6 +44,8 @@ const char SpriteData[] = {
 
 #pragma data(data)
 
+char rocket_count;
+
 void game_save(void)
 {
 	char drive = 9;
@@ -57,7 +59,7 @@ void game_save(void)
 	iec_open(drive, 2, "@0:DIGGER,P,W");
 	iec_listen(drive, 2);
 
-	iec_write(0x24);
+	iec_write(0x25);
 	if (iec_status == IEC_OK)
 	{
 		iec_write(time_count);
@@ -86,6 +88,7 @@ void game_save(void)
 		iec_write(story_pending);
 		iec_write_bytes((char *)&messages, sizeof(messages));
 		iec_write_bytes((char *)&enemies, sizeof(enemies));
+		iec_write(rocket_count);
 	}	
 	iec_unlisten();
 	iec_close(drive, 2);
@@ -106,7 +109,7 @@ void game_load(void)
 	iec_open(drive, 2, "@0:DIGGER,P,R");
 	iec_talk(drive, 2);
 	char v = iec_read();
-	if (iec_status == IEC_OK && v >= 0x23)
+	if (iec_status == IEC_OK && v >= 0x24)
 	{
 		time_count = iec_read();
 		time_days = iec_read();
@@ -119,8 +122,7 @@ void game_load(void)
 		rooms_blueprints = iec_read();
 		radio_count = iec_read();
 		radio_days = iec_read();
-		if (v >= 0x24)
-			enemy_days = iec_read();
+		enemy_days = iec_read();
 		researching = iec_read();
 		iec_read_bytes((char *)&room_constructions, sizeof(room_constructions));
 		iec_read_bytes((char *)&res_oxygen, sizeof(res_oxygen));
@@ -135,6 +137,8 @@ void game_load(void)
 		story_pending = iec_read();
 		iec_read_bytes((char *)&messages, sizeof(messages));
 		iec_read_bytes((char *)&enemies, sizeof(enemies));
+		if (v >= 0x25)
+			rocket_count = iec_read();
 	}
 
 	iec_untalk();
@@ -226,6 +230,7 @@ int main(void)
 
 	tmapx = 8; tmapy = 0;
 	cursorx = 8; cursory = 0;
+	rocket_count = 0xff;
 
 	music_init(TUNE_THEME_GENERAL_1);
 
@@ -236,6 +241,13 @@ int main(void)
 		if (time_days > enemy_days + 2)
 			story_pending |= 1 << STM_ENEMY_THREADS;
 
+
+		if (rocket_count < 200)
+		{
+			rocket_count++;
+			if (rocket_count == 200)
+				story_pending |= 1 << SIM_MOON_DESTROYED;
+		}
 
 		if (tune_queue == tune_current)
 		{
@@ -291,6 +303,10 @@ int main(void)
 
 			if (statusview == STVIEW_BUILD)
 				rooms_display();
+
+			if (rooms_researched > RTILE_LAUNCH_TOP)
+				story_pending |= 1 << SIM_ROCKET_PLANS;
+
 		}
 		else if (gmenu != GMENU_NONE)
 		{
@@ -383,21 +399,35 @@ int main(void)
 				msg_show_history();
 				break;
 
+			case GMENU_LAUNCH:
+				if (rooms_launch())
+				{
+					story_pending |= 1 << SIM_ROCKET_LAUNCHED;
+					tmapmode = TMMODE_REDRAW;			
+					rocket_count = 0;		
+				}
+				break;
 			}
 
 			gmenu = GMENU_NONE;
 		}
 		else
 		{	
+			bool	update = false;
 			while ((char)(irqcount - rescount) >= 3)
 			{
 				res_update();
 				rescount += 3;
 				if (rooms_check_construction())
 					tmapmode = TMMODE_REDRAW;
+				update = true;
+				upcount++;
+			}
+
+			if (update)
+			{
 				res_display();
 				digger_stats();
-				upcount++;
 			}
 
 			diggers_iterate();

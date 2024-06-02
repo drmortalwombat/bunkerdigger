@@ -32,6 +32,8 @@ bool rooms_build(void);
 
 bool rooms_check_construction(void);
 
+bool rooms_launch();
+
 #pragma compile("rooms.c")
 
 #endif

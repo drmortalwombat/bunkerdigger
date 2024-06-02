@@ -20,7 +20,7 @@ void res_generate(char di)
 		switch (rt)
 		{
 		case RTILE_HYDRO:
-			res_stored[RES_WATER] += diggers[di].ability;
+			res_stored[RES_WATER] += (1 + diggers[di].ability) >> 1;
 			break;
 		case RTILE_GENERATOR:
 			res_stored[RES_ENERGY] += (1 + diggers[di].ability) >> 1;
@@ -63,6 +63,13 @@ void res_generate(char di)
 			break;
 		case RTILE_CENTRIFUGE:
 			res_stored[RES_FUEL] += (diggers[di].ability + 7) >> 3;
+			if (story_pending & (1 << SIM_MOON_DESTROYED))
+			{
+				if (res_stored[RES_FUEL] >= 80)
+					story_pending |= 1 << SIM_MARS_READY;
+			}
+			else if (res_stored[RES_FUEL] >= 48)
+				story_pending |= 1 << SIM_ROCKET_READY;
 			break;
 		case RTILE_VENTILATION:
 			{
@@ -90,7 +97,8 @@ void res_generate(char di)
 				if (radio_days > 28)
 				{
 					story_pending |= 1 << STM_ENEMY_MESSAGE;
-					enemy_days = time_days;
+					if (enemy_days == 100)
+						enemy_days = time_days;
 				}
 			}
 			break;
@@ -214,7 +222,7 @@ void res_update(void)
 		}
 	}
 
-	for(char i=0; i<4; i++)
+	for(char i=0; i<2; i++)
 	{
 		char j = digger_water_index ^ digger_shuffle_mask;
 		if (diggers[j].state >= DS_IDLE)
@@ -253,7 +261,7 @@ void res_update(void)
 
 	while (heal > 0 && res_stored[RES_HEALING] > 0)
 	{
-		if (diggers[digger_heal].state != DS_FREE && diggers[digger_heal].health < DIGGER_MAX_HEALTH)
+		if (diggers[digger_heal].state >= DS_IDLE && diggers[digger_heal].health < DIGGER_MAX_HEALTH)
 		{
 			res_stored[RES_HEALING]--;
 			diggers[digger_heal].health++;

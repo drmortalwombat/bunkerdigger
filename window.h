@@ -3,7 +3,7 @@
 
 #include "display.h"
 
-extern char story_shown, story_pending;
+extern unsigned story_shown, story_pending;
 
 enum StoryMessages
 {
@@ -19,6 +19,13 @@ enum StoryMessages
 	STM_ENEMY_MESSAGE,
 	STM_ENEMY_THREADS,
 	SIM_MOON_DESTROYED,
+
+	SIM_ROCKET_PLANS,
+	SIM_ROCKET_BUILD,
+	SIM_ROCKET_READY,
+	SIM_ROCKET_LAUNCHED,
+
+	SIM_MARS_READY,
 
 	NUM_STORY_MESSAGES
 };
