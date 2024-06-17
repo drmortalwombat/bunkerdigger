@@ -18,6 +18,11 @@ extern volatile char	irqcount;
 
 void gameirq_init(void);
 
+void gameirq_hide(void);
+
+void gameirq_show(void);
+
+
 #pragma compile("gameirq.c")
 
 #endif

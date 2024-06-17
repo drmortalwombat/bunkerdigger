@@ -14,7 +14,7 @@ __striped Digger	diggers[32];
 #pragma bss(bss)
 
 static const char digger_task_char[] = {
-	'W', 'M', 'G', 'I', 'D'
+	'W', 'T', 'M', 'G', 'I', 'D', 'E'
 };
 
 char diggers_born;
@@ -251,7 +251,7 @@ void diggers_move(void)
 			}
 			break;		
 		case DS_WORKING:
-			if (diggers[i].task == DTASK_WORK)
+			if (diggers[i].task == DTASK_WORK || diggers[i].task == DTASK_TRAIN)
 			{
 				diggers[i].mi = 64;
 				if (!(irqcount & 3) && diggers[i].count)
@@ -270,6 +270,9 @@ void diggers_move(void)
 					diggers[i].color = VCOL_DARK_GREY;
 				}
 			}
+			break;
+		case DS_ESCAPED:
+			diggers[i].state = DS_FREE;
 			break;
 		case DS_DEFEND_LEFT:
 		case DS_DEFEND_RIGHT:
@@ -425,7 +428,11 @@ void digger_decide(char di)
 	case DTASK_MOVE:
 		if (ti == diggers[di].target)
 		{
-			diggers[di].task = DTASK_WORK;
+			RoomTile	rt = BunkerMapData[ti] - 16;
+			if (rt == RTILE_GYM || rt == RTILE_ARMOURY || rt == RTILE_STUDY)
+				diggers[di].task = DTASK_TRAIN;
+			else
+				diggers[di].task = DTASK_WORK;
 			diggerchanged = true;
 		}
 		else
@@ -457,6 +464,7 @@ void digger_decide(char di)
 		}
 		break;
 	case DTASK_WORK:
+	case DTASK_TRAIN:
 		if (diggers[di].enemy == 0xff || !digger_defend(di))
 			digger_work(di);
 		break;
@@ -568,7 +576,7 @@ void diggers_vacate_room(char ri)
 	{
 		if (diggers[i].target == ri)
 		{
-			if (diggers[i].task == DTASK_MOVE || diggers[i].task == DTASK_WORK)
+			if (diggers[i].task == DTASK_MOVE || diggers[i].task == DTASK_WORK || diggers[i].task == DTASK_TRAIN)
 			{
 				diggers[i].task = DTASK_IDLE;
 				if (diggers[i].state == DS_WORKING)
@@ -626,7 +634,7 @@ void digger_stats(void)
 
 bool digger_work(char di)
 {
-	if (diggers[di].task == DTASK_WORK && diggers[di].state == DS_IDLE)
+	if ((diggers[di].task == DTASK_WORK || diggers[di].task == DTASK_TRAIN) && diggers[di].state == DS_IDLE)
 	{
 		char ti = diggers[di].target;
 		char tile = BunkerMapData[ti];
@@ -805,5 +813,13 @@ bool digger_procreate(bool radio)
 		} while (radio);
 	}
 
+	return false;
+}
+
+bool diggers_alive(void)
+{
+	for(char i=0; i<diggers_born; i++)
+		if (diggers[i].state != DS_DEAD)
+			return true;
 	return false;
 }

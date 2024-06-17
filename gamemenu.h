@@ -17,7 +17,8 @@ enum GameMenu
 	GMENU_HISTORY,
 	GMENU_LAUNCH,
 	
-	GMENU_SAVE
+	GMENU_SAVE,
+	GMENU_OPTIONS
 };
 
 extern GameMenu	gmenu;

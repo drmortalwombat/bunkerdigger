@@ -13,6 +13,7 @@ enum Tune
 };
 
 extern Tune		tune_queue, tune_current;
+extern bool		music_enabled;
 
 // Initialize playback of next track immediately
 void music_init(Tune tune);

@@ -75,6 +75,14 @@ enum GroundType
 extern TileMapMode	tmapmode;
 extern char 		mapx, mapy, tmapx, tmapy;
 
+enum TileEffect
+{
+	TILEF_NORMAL,
+	TILEF_EXPLODED,
+	TILEF_ESCAPED
+};
+
+extern TileEffect	tile_effect;
 
 void tiles_init(void);
 

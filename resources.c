@@ -143,7 +143,7 @@ char digger_heal;
 char digger_water_index;
 char res_update_cnt;
 char digger_shuffle_mask;
-char time_count, time_days, enemy_days;
+char time_count, time_days, enemy_days, moon_days;
 
 void res_init(void)
 {
@@ -157,6 +157,10 @@ void res_init(void)
 	radio_count = 0;
 	radio_days = 0;
 	enemy_days = 100;
+	moon_days = 100;
+	res_stored[RES_METAL] = 16;
+	res_stored[RES_WATER] = 16;
+	res_stored[RES_ENERGY] = 16;
 }
 
 void res_update(void)
@@ -185,7 +189,7 @@ void res_update(void)
 			{
 				if (diggers[i].count == 0)
 				{
-					if (diggers[i].task == DTASK_WORK)
+					if (diggers[i].task == DTASK_WORK || diggers[i].task == DTASK_TRAIN)
 						res_generate(i);
 					diggers[i].state = DS_IDLE;
 				}

@@ -53,10 +53,19 @@ const char room_names[16 * 10 + 1] =
 
 __striped Construction		room_constructions[4];
 char						room_num_construction;
+char						room_count[22];
+
+void rooms_init(void)
+{
+	room_num_construction = 0;
+	rooms_researched = RTILE_LABORATORY + 1;
+	rooms_blueprints = RTILE_RADIO + 1;	
+	researching = 6 << (rooms_researched - RTILE_LABORATORY);
+}
 
 void rooms_count(void)
 {
-	for(char i=0; i<21; i++)
+	for(char i=0; i<22; i++)
 		room_count[i] = 0;
 	for(int i=0; i<256; i++)
 	{
@@ -214,19 +223,22 @@ char rooms_find_rocket(char n)
 	return 0xff;
 }
 
-bool rooms_launch()
+bool rooms_launch(bool mars)
 {
 	if (!room_count[RTILE_MISSILE_TOP] ||
 		!room_count[RTILE_MISSILE_MID] ||
 		!room_count[RTILE_MISSILE_BOTTOM])
 		return false;
 
-	char ri = rooms_find_rocket(1);
+	char ri = rooms_find_rocket(mars ? 5 : 3);
 	if (ri == 0xff)
 		return false;
 
-	if (res_stored[RES_FUEL] < 48)
+	char rfuel = mars ? 80 : 48;
+
+	if (res_stored[RES_FUEL] < rfuel)
 		return false;
+	res_stored[RES_FUEL] -= rfuel;
 
 	BunkerMapData[ri] = TILE_ROOMS + RTILE_LAUNCH_TOP;
 	char j = ri + 16;
@@ -236,8 +248,6 @@ bool rooms_launch()
 		j += 16;
 	}
 	BunkerMapData[j] = TILE_ROOMS + RTILE_LAUNCH_BOTTOM;
-
-	res_stored[RES_FUEL] -= 48;
 
 	return true;
 }

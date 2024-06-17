@@ -3,7 +3,7 @@
 
 #include "display.h"
 
-extern unsigned story_shown, story_pending;
+extern unsigned long story_shown, story_pending;
 
 enum StoryMessages
 {
@@ -26,6 +26,13 @@ enum StoryMessages
 	SIM_ROCKET_LAUNCHED,
 
 	SIM_MARS_READY,
+	SIM_MARS_ESCAPED,
+
+	SIM_ENEMY_INCOMING,
+	SIM_ENEMY_VICTORY,
+
+	STM_DIGGERS_DEAD,
+	STM_MOON_IMPACT,
 
 	NUM_STORY_MESSAGES
 };
@@ -47,6 +54,8 @@ void window_scroll(void);
 void window_print(const char * text);
 
 char window_write(char x, char y, const char * text);
+
+void window_char(char x, char y, char ch);
 
 char window_write_uint(char x, char y, unsigned u);
 

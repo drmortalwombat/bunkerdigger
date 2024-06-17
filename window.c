@@ -3,7 +3,7 @@
 #include "gameirq.h"
 #include <c64/keyboard.h>
 
-unsigned story_shown, story_pending;
+unsigned long story_shown, story_pending;
 
 void story_init(void)
 {
@@ -95,12 +95,48 @@ const char * StoryMessageTexts[] = {
 	"\x01IT IS A SHAME, WE HAVE TO\n"
 	"ESCAPE, BUT AT LEAST WE KNOW,\n"
 	"THAT THE ENEMY WILL NOT FOLLOW\n"
-	"US.\n\x01\x01\x01"
+	"US.\n\x01\x01\x01",
+
+	"\x01CONGRATULATIONS, YOU SAVED\n"
+	"YOUR DWELLERS BY ABANDONING\n"
+	"EARTH\n"
+	"\x01NUCLEAR WAR WAS PROBABLY\n"
+	"NOT THE BEST IDEA IN THE FIRST\n"
+	"PLACE...\n\n"
+	"\x01BUNKER CONTROL SYSTEM\n"
+	"SHUTTING OFF.\x01.3\x01..2\x01..1\n\x01\x01\x01",
+
+	"\x01AN INCOMMING ENEMY MISSILE\n"
+	"HAS BEEN DETECTED, IT IS A\n"
+	"MATTER OF DAYS, BEFORE OUR\n"
+	"BUNKER WILL BE DESTROYED.\n\n"
+	"\x01WE REALY NEED TO SPEED UP\n"
+	"OUR OWN ROCKET PROGRAM.\n\x01\x01\x01",
+
+	"\x01IMPACT OF ENEMY WARHEAD\n"
+	"IMMINENT..\x01..\x01..\x01..\n"
+	"MARY HAD A LITTLE LAMB..\x01..\n"
+	"LTIL\x01 LAMB...\x01\x01...\x01"
+	"\n\n\nGAME OVER...\n\x01\x01\x01",
+
+	"\x01FINAL MESSAGE FROM BUNKER\n"
+	"SYSTEM - NO MORE LIVE SIGNS\n"
+	"DETECTED.\n\n"
+	"\x01SHUTTING DOWN REMAINING\n"
+	"HIBERNATION CAPSULES.\n\n"
+	"\x01BUNKER CONTROL SYSTEM\n"
+	"SHUTTING OFF.\x01.3\x01..2\x01..1\n\x01\x01\x01",
+
+	"\x01IMPACT OF MOON DEBRIS\n"
+	"IMMINENT..\x01..\x01..\x01..\n"
+	"MARY HAD A LITTLE LAMB..\x01..\n"
+	"LTIL\x01 LAMB...\x01\x01...\x01"
+	"\n\n\nGAME OVER...\n\x01\x01\x01",
 };
 
 bool story_messages(void)
 {
-	unsigned m = story_pending & ~story_shown;
+	unsigned long m = story_pending & ~story_shown;
 	if (m)
 	{
 		StoryMessages i = 0;
@@ -110,7 +146,7 @@ bool story_messages(void)
 			i++;
 		}
 
-		story_shown |= 1 << i;
+		story_shown |= 1ul << i;
 
 		window_open(4, 7, 30, 10);
 		window_print(StoryMessageTexts[i]);
@@ -269,6 +305,16 @@ void window_print(const char * text)
 	}
 }
 
+void window_char(char x, char y, char ch)
+{
+	char	*	wp = winpos(x, y);
+
+	const char * cp = FontHiresData + 8 * (ch & 0x3f);
+
+	for(char j=0; j<8; j++)
+		wp[j] = cp[j];
+}
+
 char window_write(char x, char y, const char * text)
 {
 	char	*	wp = winpos(x, y);
@@ -348,8 +394,7 @@ void window_mask3(char * dp, char mi, char w)
 
 void window_open(char x, char y, char w, char h)
 {
-	irqphase = IRQP_WINDOW;
-	vic.spr_enable = 0x00;
+	gameirq_hide();
 
 	winX = x;
 	winY = y;
@@ -357,7 +402,7 @@ void window_open(char x, char y, char w, char h)
 	winH = h;
 
 	winP = HiresRow[winY] + 8 * winX;
-	winS = Screen + 40 * winY + winX;
+	winS = ScreenRow[winY] + winX;
 
 	char	*	wp = winP - 328;
 
@@ -397,8 +442,8 @@ void window_open(char x, char y, char w, char h)
 	tp = wp;
 	window_mask3(tp, 40, w);
 
-	char	*	sp = Screen + 40 * winY + winX - 41;
-	char	*	cp = Color + 40 * winY + winX - 41;
+	char	*	sp = ScreenRow[winY] + winX - 41;
+	char	*	cp = ColorRow[winY] + winX - 41;
 
 	__assume(w < 40);
 	__assume(w > 0);
@@ -430,6 +475,6 @@ void window_open(char x, char y, char w, char h)
 void window_close(void)
 {
 	tmapmode = TMMODE_REDRAW;
-	irqphase = IRQP_MOVE_DIGGER;
-}
 
+	gameirq_show();
+}

@@ -168,6 +168,7 @@ struct tile_strata
 };
 
 
+TileEffect	tile_effect;
 
 void tiles_init(void)
 {
@@ -199,6 +200,8 @@ void tiles_init(void)
 			ip += 16;
 		}
 	}
+
+	tile_effect = TILEF_NORMAL;
 }
 
 
@@ -403,6 +406,39 @@ void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 #endif
 }
 
+void tile_draw_e(char tile, char flags, char * hp, char * sp, char * cp)
+{
+	const char * const * tp = bunkerTiles + 64 * tile;
+
+	char	gc = VCOL_DARK_GREY | 16 * VCOL_DARK_GREY, gs = VCOL_DARK_GREY | 16 * VCOL_DARK_GREY;
+
+	if (tile_effect == TILEF_ESCAPED)
+	{
+		gc = VCOL_RED;
+		gs = VCOL_DARK_GREY | 16 * VCOL_MED_GREY;
+	}
+
+	for(char iy=0; iy<8; iy++)
+	{
+		for(char ix=0; ix<8; ix++)
+		{
+			const char * shp = tp[ix];
+			#pragma unroll(full)
+			for(char i=0; i<8; i++)
+				hp[i] = shp[i];
+
+			sp[ix] = gs;
+			cp[ix] = gc;
+			hp += 8;
+		}
+
+		hp += 320 - 64;
+		sp += 40;
+		cp += 40;
+		tp += 8;
+	}
+}
+
 inline void tile_draw(char tile, char flags, char x, char y)
 {
 	__assume(y < 25);
@@ -412,7 +448,9 @@ inline void tile_draw(char tile, char flags, char x, char y)
 	char * sp = Screen + 40 * y + x;
 	char * cp = Color + 40 * y + x;
 
-	if (TileFlags[tile] & TF_ROOM)
+	if (tile_effect)
+		tile_draw_e(tile, flags, hp, sp, cp);
+	else if (TileFlags[tile] & TF_ROOM)
 		tile_draw_p(tile, flags, hp, sp, cp);
 	else
 		tile_draw_g(tile, flags, hp, sp, cp);

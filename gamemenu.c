@@ -17,14 +17,14 @@ bool buildingchanged;
 StatusView	statusview;
 
 static const char * gamemenutexts[] = {
-	S"_MAP", S"_TEM", S"_DIG", S"_BLD", S"_ASG", S"_GRD", S"_HIS", S"_LCH", S"_SAV"
+	S"_MAP", S"_TEM", S"_DIG", S"_BLD", S"_ASG", S"_GRD", S"_HIS", S"_LCH", S"_SAV", S"_OPT"
 };
 
 void gmenu_init(void)
 {
 	memset(Hires + 24 * 320, 0xff, 320);
 
-	for(char x=0; x<9; x++)
+	for(char x=0; x<10; x++)
 	{
 		disp_menu(4 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	}
@@ -51,7 +51,7 @@ void gmenu_nav(signed char dx)
 {
 	if (dx < 0 && gmenux > 0)
 		gmenu_set(gmenux - 1);
-	else if (dx > 0 && gmenux < 8)
+	else if (dx > 0 && gmenux < 9)
 		gmenu_set(gmenux + 1);
 }
 
@@ -93,6 +93,10 @@ void gmenu_key(char keyb)
 		break;
 	case KSCAN_S:
 		gmenu_set(8);
+		gmenu_push();
+		break;
+	case KSCAN_O:
+		gmenu_set(9);
 		gmenu_push();
 		break;
 	case KSCAN_CSR_RIGHT:

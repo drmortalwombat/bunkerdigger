@@ -24,6 +24,7 @@ struct Message
 	char		param;
 };
 
+extern char msg_buffer[33];
 extern Message	messages[32];
 extern char		msg_head, msg_tail, msg_row, msg_delay;
 

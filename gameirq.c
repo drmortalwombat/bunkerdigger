@@ -38,9 +38,6 @@ void user_interaction(void)
 
 __interrupt void irq_lower(void)
 {
-	if (irqphase == IRQP_WINDOW)
-		return;
-	
 //	vic.color_border = VCOL_GREEN;
 	vspr_update();
 	if (irqphase == IRQP_UPDATE_SPRITE)
@@ -48,7 +45,11 @@ __interrupt void irq_lower(void)
 //		vic.color_border = VCOL_CYAN;
 		rirq_sort();
 	}
+//	vic.color_border = VCOL_BLACK;
 
+	if (irqphase == IRQP_WINDOW)
+		return;
+	
 	if (irqphase == IRQP_USER_INPUT)
 	{
 		irqphase = IRQP_MOVE_DIGGER;
@@ -56,19 +57,19 @@ __interrupt void irq_lower(void)
 	}
 	else
 		irqphase++;
-//	vic.color_border = VCOL_BLACK;
 
 	vic.spr_priority = 0x00;
 }
 
 __interrupt void irq_upper(void)
 {
+//	vic.color_border = VCOL_YELLOW;
 	music_play();
+//	vic.color_border = VCOL_PURPLE;
 	
 	switch(irqphase)
 	{
 	case IRQP_MOVE_DIGGER:
-//		vic.color_border = VCOL_YELLOW;
 		diggers_move();
 		enemies_move();
 		break;
@@ -94,15 +95,38 @@ __interrupt void irq_upper(void)
 		user_interaction();
 		break;
 	case IRQP_WINDOW:
+		for(char i=0; i<16; i++)
+			vspr_move(i, 0, 255);
+		vspr_sort();
 		break;
 	}
 
 //	vic.color_border = VCOL_BLACK;
 }
 
+void gameirq_hide(void)
+{
+	irqphase = IRQP_WINDOW;
+	vic.spr_enable = 0x00;
+
+	rirq_set(8, 120, &rirqlow);	
+	rirq_set(10, 120, &rirqmenu);	
+	rirq_sort();
+}
+
+void gameirq_show(void)
+{
+	rirq_set(8, 250, &rirqlow);	
+	rirq_set(10, 241, &rirqmenu);
+	rirq_sort();
+
+	irqphase = IRQP_MOVE_DIGGER;
+}
 
 void gameirq_init(void)
 {
+	irqphase = IRQP_WINDOW;	
+	
 	rirq_build(&rirqlow, 1);
 	rirq_call(&rirqlow, 0, irq_lower);
 	rirq_set(8, 250, &rirqlow);

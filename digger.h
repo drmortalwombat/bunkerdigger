@@ -4,10 +4,12 @@
 enum DiggerTask
 {
 	DTASK_WORK,
+	DTASK_TRAIN,
 	DTASK_MOVE,
 	DTASK_GUARD,
 	DTASK_IDLE,
-	DTASK_DEAD
+	DTASK_DEAD,
+	DTASK_ESCAPED
 };
 
 enum DiggerState
@@ -21,7 +23,8 @@ enum DiggerState
 	DS_CLIMB_DOWN,
 	DS_DEFEND_RIGHT,
 	DS_DEFEND_LEFT,
-	DS_WORKING
+	DS_WORKING,
+	DS_ESCAPED
 };
 
 #define DIGGER_MAX_SKILL	16
@@ -67,6 +70,8 @@ void digger_check_color(char di);
 bool digger_work(char di);
 
 bool digger_procreate(bool radio);
+
+bool diggers_alive(void);
 
 #pragma compile("digger.c")
 
