@@ -2,6 +2,18 @@
 #include "tiles.h"
 #include "gameirq.h"
 #include <c64/keyboard.h>
+#include <audio/sidfx.h>
+
+
+SIDFX	CharSFX[1] = {{
+	12000, 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_48,
+	0, 0,
+	0, 2,
+	20
+}};
 
 unsigned long story_shown, story_pending;
 
@@ -248,6 +260,8 @@ void window_print(const char * text)
 	char	*	sp = slp;
 	char	*	psp = nullptr;
 
+	char		i = 0;
+
 	while (char	c = *text++)
 	{
 		if (c == '\n')
@@ -281,6 +295,10 @@ void window_print(const char * text)
 		}
 		else
 		{
+			i++;
+			if (!(i & 1))
+				sidfx_play(2, CharSFX, 1);
+
 			*sp = 0xd1;
 			for(char j=0; j<8; j++)
 				wp[j] = 0xaa;

@@ -7,6 +7,7 @@
 #include <c64/rasterirq.h>
 #include <c64/keyboard.h>
 #include <c64/vic.h>
+#include <audio/sidfx.h>
 
 IRQPhase			irqphase;
 volatile char		irqcount;
@@ -101,6 +102,8 @@ __interrupt void irq_upper(void)
 		break;
 	}
 
+	sidfx_loop_2();
+	
 //	vic.color_border = VCOL_BLACK;
 }
 

@@ -4,6 +4,29 @@
 #include "tiles.h"
 #include "digger.h"
 #include "resources.h"
+#include <audio/sidfx.h>
+
+
+SIDFX	SFXMove[1] = {{
+	4000, 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_114 | 0xf0,
+	0, 0,
+	2, 2,
+	10
+}};
+
+SIDFX	SFXClick[1] = {{
+	2000, 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_300 | 0xd0,
+	100, 0,
+	4, 8,
+	20
+}};
+
 
 GameMenu	gmenu;
 char gmenux;
@@ -43,6 +66,8 @@ void gmenu_set(char x)
 
 void gmenu_push(void)
 {
+	sidfx_play(2, SFXClick, 1);
+
 	if (gmenu == GMENU_NONE)
 		gmenu = (GameMenu)(gmenux + GMENU_MAP);
 }
@@ -230,6 +255,8 @@ void gmenu_joy(signed char dx, signed char dy)
 
 		if (di != diggeri && diggers[di].state > DS_DEAD)
 		{
+			sidfx_play(2, SFXMove, 1);
+
 			diggeri = di;
 			diggerchanged = true;
 		}
@@ -261,6 +288,8 @@ void gmenu_joy(signed char dx, signed char dy)
 
 		if (bi != buildingi)
 		{
+			sidfx_play(2, SFXMove, 1);
+
 			buildingi = bi;
 			buildingchanged = true;
 		}

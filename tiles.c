@@ -172,10 +172,11 @@ TileEffect	tile_effect;
 
 void tiles_init(void)
 {
-	memset(TileMapFlags, 0, 256);
-
 	for(int i=0; i<256; i++)
-		BunkerMapData[i] = 40 + (rand() & 1);
+	{
+		TileMapFlags[i] = 0;
+		BunkerMapData[i] = 40 + (((const char *)0xa000)[i] & 1);
+	}
 
 	BunkerMapData[ 7] = 12;
 	BunkerMapData[ 8] = 16 + RTILE_WORKBENCH;
@@ -439,15 +440,8 @@ void tile_draw_e(char tile, char flags, char * hp, char * sp, char * cp)
 	}
 }
 
-inline void tile_draw(char tile, char flags, char x, char y)
+inline void tile_draw(char tile, char flags, char * hp, char * sp, char * cp)
 {
-	__assume(y < 25);
-	__assume(x < 40);
-
-	char * hp = Hires + 320 * y + x * 8;
-	char * sp = Screen + 40 * y + x;
-	char * cp = Color + 40 * y + x;
-
 	if (tile_effect)
 		tile_draw_e(tile, flags, hp, sp, cp);
 	else if (TileFlags[tile] & TF_ROOM)
@@ -457,8 +451,66 @@ inline void tile_draw(char tile, char flags, char x, char y)
 }
 
 
+static const char tile_draw_tile_offset[9] = {
+	0x00, 0x01, 0x02,
+	0x10, 0x11, 0x12,
+	0x20, 0x21, 0x22
+};
+
+static __striped char * const tile_draw_hires[9] = {
+	Hires + 320 * 8 * 0 + 8 * 8 * 0,	
+	Hires + 320 * 8 * 0 + 8 * 8 * 1,
+	Hires + 320 * 8 * 0 + 8 * 8 * 2,	
+
+	Hires + 320 * 8 * 1 + 8 * 8 * 0,	
+	Hires + 320 * 8 * 1 + 8 * 8 * 1,
+	Hires + 320 * 8 * 1 + 8 * 8 * 2,	
+
+	Hires + 320 * 8 * 2 + 8 * 8 * 0,	
+	Hires + 320 * 8 * 2 + 8 * 8 * 1,
+	Hires + 320 * 8 * 2 + 8 * 8 * 2
+};
+
+static __striped char * const tile_draw_screen[9] = {
+	Screen + 40 * 8 * 0 + 8 * 0,	
+	Screen + 40 * 8 * 0 + 8 * 1,
+	Screen + 40 * 8 * 0 + 8 * 2,	
+
+	Screen + 40 * 8 * 1 + 8 * 0,	
+	Screen + 40 * 8 * 1 + 8 * 1,
+	Screen + 40 * 8 * 1 + 8 * 2,	
+
+	Screen + 40 * 8 * 2 + 8 * 0,	
+	Screen + 40 * 8 * 2 + 8 * 1,
+	Screen + 40 * 8 * 2 + 8 * 2
+};
+
+static __striped char * const tile_draw_color[9] = {
+	Color + 40 * 8 * 0 + 8 * 0,	
+	Color + 40 * 8 * 0 + 8 * 1,
+	Color + 40 * 8 * 0 + 8 * 2,	
+
+	Color + 40 * 8 * 1 + 8 * 0,	
+	Color + 40 * 8 * 1 + 8 * 1,
+	Color + 40 * 8 * 1 + 8 * 2,	
+
+	Color + 40 * 8 * 2 + 8 * 0,	
+	Color + 40 * 8 * 2 + 8 * 1,
+	Color + 40 * 8 * 2 + 8 * 2
+};
+
+
+
+
 void tiles_draw(char sx, char sy)
 {
+	char tb = sy * 16 + sx;
+	for(char i=0; i<9; i++)
+	{
+		char ti = tb + tile_draw_tile_offset[i];
+		tile_draw(BunkerMapData[ti], TileMapFlags[ti], tile_draw_hires[i], tile_draw_screen[i], tile_draw_color[i]);
+	}
+#if 0
 	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 0)], TileMapFlags[(sy + 0) * 16 + (sx + 0)], 8 * 0, 8 * 0);
 	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 1)], TileMapFlags[(sy + 0) * 16 + (sx + 1)], 8 * 1, 8 * 0);
 	tile_draw(BunkerMapData[(sy + 0) * 16 + (sx + 2)], TileMapFlags[(sy + 0) * 16 + (sx + 2)], 8 * 2, 8 * 0);
@@ -470,6 +522,7 @@ void tiles_draw(char sx, char sy)
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 0)], TileMapFlags[(sy + 2) * 16 + (sx + 0)], 8 * 0, 8 * 2);
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 1)], TileMapFlags[(sy + 2) * 16 + (sx + 1)], 8 * 1, 8 * 2);
 	tile_draw(BunkerMapData[(sy + 2) * 16 + (sx + 2)], TileMapFlags[(sy + 2) * 16 + (sx + 2)], 8 * 2, 8 * 2);
+#endif
 }
 
 static char cursor_or_0[] = {
@@ -506,14 +559,16 @@ void tile_cursor_show(char x, char y)
 
 	for(char i=0; i<8; i++)
 	{
-		cursor_back[0][i] = hp0[i];
-		hp0[i     ] = hp0[i     ] & cursor_and_0[i] | cursor_or_0[i];
-		cursor_back[1][i] = hp0[i + 56];
-		hp0[i + 56] = hp0[i + 56] & cursor_and_1[i] | cursor_or_1[i];
-		cursor_back[2][i] = hp1[i];
-		hp1[i     ] = hp1[i     ] & cursor_and_0[i + 6] | cursor_or_0[i + 6];
-		cursor_back[3][i] = hp1[i + 56];
-		hp1[i + 56] = hp1[i + 56] & cursor_and_1[i + 6] | cursor_or_1[i + 6];
+		char	t;
+
+		cursor_back[0][i] = t = hp0[i];
+		hp0[i     ] = t & cursor_and_0[i] | cursor_or_0[i];
+		cursor_back[1][i] = t = hp0[i + 56];
+		hp0[i + 56] = t & cursor_and_1[i] | cursor_or_1[i];
+		cursor_back[2][i] = t = hp1[i];
+		hp1[i     ] = t & cursor_and_0[i + 6] | cursor_or_0[i + 6];
+		cursor_back[3][i] = t = hp1[i + 56];
+		hp1[i + 56] = t & cursor_and_1[i + 6] | cursor_or_1[i + 6];
 	}
 }
 

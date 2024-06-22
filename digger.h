@@ -32,6 +32,8 @@ enum DiggerState
 
 #define DIGGER_MAX_AIR		64
 
+#define DIGGER_WARN_ATTACKED	128
+
 struct Digger
 {
 	char 					tx, ty;

@@ -185,6 +185,12 @@ void res_update(void)
 	{
 		if (diggers[i].state >= DS_IDLE)
 		{
+			if (diggers[i].warn & DIGGER_WARN_ATTACKED)
+			{
+				msg_queue(MSG_DIGGER_ATTACKED, i);
+				diggers[i].warn &= 31;
+			}
+
 			if (diggers[i].state == DS_WORKING)
 			{
 				if (diggers[i].count == 0)
@@ -236,7 +242,9 @@ void res_update(void)
 			else if (diggers[j].health > 0)
 			{
 				story_pending |= 1 << STM_LOW_WATER;
-				diggers[j].warn = 16;
+				if (!diggers[j].warn && diggers[j].health < 16)
+					msg_queue(MSG_DIGGER_STARVING, j);
+				diggers[j].warn |= 31;
 				diggers[j].health--;			
 				diggerchanged = true;
 			}
@@ -249,7 +257,9 @@ void res_update(void)
 		if (diggers[i].state >= DS_IDLE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
 		{
 			story_pending |= 1 << STM_LOW_AIR;
-			diggers[i].warn = 16;
+			if (!diggers[i].warn && diggers[i].health < 16)
+				msg_queue(MSG_DIGGER_SUFFOCATING, i);
+			diggers[i].warn |= 31;
 			diggers[i].health--;
 			diggerchanged = true;
 		}

@@ -106,7 +106,7 @@ void music_play(void)
 
 void music_patch_voice3(bool enable)
 {
-	*(char *)0xa14e = enable ? 0x20 : 0x4c;
+	*(char *)0xa157 = enable ? 0x20 : 0x4c;
 }
 
 void music_toggle(void)

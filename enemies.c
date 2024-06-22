@@ -89,7 +89,10 @@ void enemies_move(void)
 					char dmg = enemies[i].damage - def;
 					if (diggers[ti].health > dmg)
 					{
-						diggers[ti].warn = 16;
+						if (!diggers[ti].warn && diggers[ti].health < 32)
+							diggers[ti].warn |= DIGGER_WARN_ATTACKED;
+						diggers[ti].warn |= 31;
+
 						diggers[ti].health -= dmg;
 					}
 					else
@@ -160,7 +163,7 @@ void enemy_spawn(char ei)
 		char tf = TileFlags[BunkerMapData[ri]];
 		if ((tf & TF_BUNKER) && (tf & (TF_LEFT | TF_RIGHT)))
 		{
-			char et = (rand() & 127) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
+			char et = (rand() & 255) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
 			if (et > 7) et = 7;
 
 			enemies[ei].tx = ri & 0x0f;

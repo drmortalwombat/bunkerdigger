@@ -8,6 +8,17 @@
 #include "enemies.h"
 #include "window.h"
 #include <c64/sprites.h>
+#include <audio/sidfx.h>
+
+SIDFX	SFXTap[1] = {{
+	400, 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_114 | 0xf0,
+	0, 0,
+	2, 2,
+	0
+}};
 
 #pragma bss(xbss)
 __striped Digger	diggers[32];
@@ -138,9 +149,12 @@ void digger_check_color(char di)
 	diggers[di].color = color;
 }
 
+char	warn_phase = 0;
 
 void diggers_move(void)
 {
+	warn_phase++;
+
 	for(char i=0; i<32; i++)
 	{	
 		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE)
@@ -161,8 +175,11 @@ void diggers_move(void)
 			dp[1] &= m;
 		}
 
-		if (diggers[i].warn)
-			diggers[i].warn--;
+		if (warn_phase & 1)
+		{
+			if (diggers[i].warn)
+				diggers[i].warn--;
+		}
 
 		switch(diggers[i].state)
 		{
@@ -184,7 +201,7 @@ void diggers_move(void)
 			{
 				diggers[i].mi++;
 				if (diggers[i].mi == 64 + 17)
-					diggers[i].mi = 64 + 11;				
+					diggers[i].mi = 64 + 11;
 			}
 			break;
 		case DS_MOVE_LEFT:
@@ -205,7 +222,7 @@ void diggers_move(void)
 			{
 				diggers[i].mi++;
 				if (diggers[i].mi == 64 + 9)
-					diggers[i].mi = 64 + 3;				
+					diggers[i].mi = 64 + 3;
 			}
 			break;		
 		case DS_CLIMB_DOWN:
@@ -490,6 +507,8 @@ void diggers_iterate(void)
 
 char diggers_sprites(char si, char sx, char sy)
 {
+	bool	tap = false;
+
 	for(char i=0; i<32; i++)
 	{	
 		if (diggers[i].state != DS_FREE)
@@ -508,16 +527,24 @@ char diggers_sprites(char si, char sx, char sy)
 						c = VCOL_WHITE;
 				}
 
+				char mi = diggers[i].mi;
+
+				if (mi == 64 + 13 || mi == 64 + 16 || mi == 64 + 5 || mi == 64 + 8)
+					tap = true;
+
 				vspr_set(si, 
 					12 + dx * 64 + diggers[i].sx * 4,
 					44 + dy * 64 + diggers[i].sy * 4,
-					diggers[i].mi, c);
+					mi, c);
 				si++;
 				if (si == 16)
 					break;
 			}		
 		}
 	}
+
+	if (tap && sidfx_idle(2))
+		sidfx_play(2, SFXTap, 1);
 
 	return si;
 }

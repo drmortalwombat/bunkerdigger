@@ -4,7 +4,9 @@ const char FontHiresData[] = {
 	#embed ctm_chars "colorfont.ctm"
 };
 
+#pragma bss(ybss)
 char FontHiresMask[512];
+#pragma bss(bss)
 
 #pragma align(FontHiresData, 256)
 #pragma align(FontHiresMask, 256)

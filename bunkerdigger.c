@@ -22,8 +22,10 @@
 #include "enemies.h"
 #include "window.h"
 #include <c64/iecbus.h>
+#include <audio/sidfx.h>
 
 #pragma stacksize(128)
+#pragma heapsize(0)
 
 #pragma section(resources, 0)
 #pragma section(xbss, 0, , , bss)
@@ -410,6 +412,7 @@ int main(void)
 
 	display_init();
 	disp_init();
+	sidfx_init();
 
 	gameirq_init();
 
@@ -427,12 +430,16 @@ int main(void)
 	char	upcount = 0;
 	bool	update_status = false;
 
-	music_init(TUNE_THEME_GENERAL_1);
+
+	music_init(TUNE_TITLE);
 
 	tiles_draw(tmapx, tmapy);
 	minimap_draw();
 	game_menu();
 	minimap_draw();
+
+	music_patch_voice3(false);
+	music_init(TUNE_THEME_GENERAL_1);
 
 	for(;;)
 	{

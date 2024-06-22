@@ -1,6 +1,33 @@
 #include "messages.h"
 #include "display.h"
+#include <audio/sidfx.h>
 
+
+SIDFX	SFXMessage[3] = {{
+	NOTE_C(8), 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_300 | 0xd0,
+	0, 0,
+	2, 0,
+	15
+},{
+	NOTE_E(8), 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_300 | 0xd0,
+	0, 0,
+	2, 0,
+	15
+},{
+	NOTE_C(9), 2048, 
+	SID_CTRL_RECT | SID_CTRL_GATE,
+	SID_ATK_2 | SID_DKY_48,
+	SID_DKY_750 | 0xd0,
+	0, 0,
+	2, 16,
+	5
+}};
 
 Message	messages[32];
 char	msg_head, msg_tail, msg_row, msg_delay;
@@ -10,13 +37,14 @@ char msg_buffer[33];
 const char * msg_templates[] = {
 	"d DEHYBERNATED",
 	"d ARRIVED AT BUNKER",
-	"d SUFFOCATED",
-	"d DIED OF THIRST",
+	"d SUFFOCATING",
+	"d DEHYDRATING",
 	"d KILLED",
 	"b RESEARCHED",
 	"MINE DEPLETED",
 	"b COMPLETED",
-	"b BLUEPRINT"
+	"b BLUEPRINT",
+	"d ATTACKED"
 };
 
 void msg_expand(MessageType msg, char param)
@@ -64,6 +92,7 @@ void msg_queue(MessageType msg, char param)
 		disp_chars_msg(23 - msg_row, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
 		msg_row++;
 		msg_delay = 100;
+		sidfx_play(2, SFXMessage, 3);
 	}
 }
 
