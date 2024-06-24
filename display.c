@@ -267,12 +267,13 @@ void disp_bbar(char x, char y, char w)
 		hp[i] &= 0x3f;
 }
 
-void disp_chars_msg(char y, const char * text, char n, char back, char color)
+void disp_chars_msg(char x, char y, const char * text, char n, char back, char color)
 {
+	__assume(x < 40);
 	__assume(y < 25);
 
-	char * hp = HiresRow[y];
-	char * sp = ScreenRow[y];
+	char * hp = HiresRow[y] + x * 8;
+	char * sp = ScreenRow[y] + x;
 
 	for(char i=0; i<n; i++)
 	{

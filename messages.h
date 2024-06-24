@@ -29,6 +29,8 @@ extern char 	msg_buffer[33];
 extern Message	messages[32];
 extern char		msg_head, msg_tail, msg_row, msg_delay;
 
+void msg_init(void);
+
 void msg_queue(MessageType msg, char param);
 
 void msg_refresh(void);

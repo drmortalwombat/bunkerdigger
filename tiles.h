@@ -86,6 +86,12 @@ extern TileEffect	tile_effect;
 
 void tiles_init(void);
 
+bool tile_is_bunker(char x, char y);
+
+bool tile_is_room(char x, char y);
+
+char tile_flags(char x, char y);
+
 void tiles_draw(char sx, char sy);
 
 bool tile_dig(char x, char y);
@@ -95,6 +101,10 @@ void tile_cursor_show(char x, char y);
 void tile_cursor_hide(char x, char y);
 
 char tile_plan(char si, char di);
+
+void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp);
+
+void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp);
 
 #pragma compile("tiles.c")
 

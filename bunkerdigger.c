@@ -21,6 +21,7 @@
 #include "messages.h"
 #include "enemies.h"
 #include "window.h"
+#include "intro.h"
 #include <c64/iecbus.h>
 #include <audio/sidfx.h>
 
@@ -30,6 +31,7 @@
 #pragma section(resources, 0)
 #pragma section(xbss, 0, , , bss)
 #pragma section(ybss, 0, , , bss)
+#pragma section( messages, 0)
 
 #pragma region( main, 0x0880, 0xa000, , , {code, data, bss, heap})
 #pragma region( stack, 0x0800, 0x0880, , , {stack})
@@ -38,10 +40,16 @@
 #pragma region( xbss, 0x0400, 0x0800, , , {xbss})
 #pragma region( ybss, 0xc000, 0xc800, , , {ybss})
 
+#pragma region( messages, 0xb000, 0xc000, , , {messages} )
+
 #pragma data(resources)
 
 const char SpriteData[] = {
 	#embed spd_sprites lzo "sprites.spd"
+};
+ 
+const char SpritesIntro[] = {
+	#embed 4096 0 lzo "introsprites.bin"
 };
 
 #pragma data(data)
@@ -118,6 +126,7 @@ void game_init(void)
 	res_init();
 	story_init();
 	rooms_init();	
+	msg_init();
 
 	tmapx = 8; tmapy = 0;
 	cursorx = 8; cursory = 0;
@@ -213,6 +222,8 @@ void display_init(void)
 	mmap_set(MMAP_RAM);
 
 	oscar_expand_lzo(Sprites, SpriteData);
+	oscar_expand_lzo((char *)0xc000, SpritesIntro);
+	memcpy((char *)0xc800, (char *)0xc000, 0x0400);
 
 	mmap_set(MMAP_NO_ROM);
 
@@ -408,35 +419,36 @@ void game_destroy(void)
 
 int main(void)
 {
-	save_drive = 9;
+	save_drive = 8;
 
 	display_init();
+
 	disp_init();
 	sidfx_init();
 
 	gameirq_init();
 
-	gmenu_init();
-
-	game_init();
-
-	game_load();
+	display_intro();
 
 	statusview = STVIEW_MINIMAP;
-	minimap_highlight(mapx, mapy);			
-	
 	char	rescount = irqcount;
 	char	pirqcount = irqcount;
 	char	upcount = 0;
 	bool	update_status = false;
 
 
-	music_init(TUNE_TITLE);
+	game_init();
 
-	tiles_draw(tmapx, tmapy);
-	minimap_draw();
+	window_open(10, 10, 20, 3);
+	window_write(2, 1, "LOADING...");
+	game_load();
+
+//	minimap_draw();
 	game_menu();
+
+	memset(Hires, 0x00, 8000);
 	minimap_draw();
+	gmenu_init();
 
 	music_patch_voice3(false);
 	music_init(TUNE_THEME_GENERAL_1);

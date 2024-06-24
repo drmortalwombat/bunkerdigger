@@ -23,6 +23,8 @@ void story_init(void)
 	story_pending = 0;
 }
 
+#pragma code(messages)
+
 const char * StoryMessageTexts[] = {
 	"\x01IF YOU CAN READ THIS, WE MUST\n"
 	"HAVE WON THE WAR.\n"
@@ -145,6 +147,8 @@ const char * StoryMessageTexts[] = {
 	"LTIL\x01 LAMB...\x01\x01...\x01"
 	"\n\n\nGAME OVER...\n\x01\x01\x01",
 };
+
+#pragma code(code)
 
 bool story_messages(void)
 {

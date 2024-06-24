@@ -47,6 +47,12 @@ const char * msg_templates[] = {
 	"d ATTACKED"
 };
 
+void msg_init(void)
+{
+	msg_head = msg_tail = msg_row = 0;
+	msg_delay = 0;
+}
+
 void msg_expand(MessageType msg, char param)
 {
 	const char * tp = msg_templates[msg];
@@ -89,7 +95,7 @@ void msg_queue(MessageType msg, char param)
 	if (msg_row < 24)
 	{
 		msg_expand(msg, param);
-		disp_chars_msg(23 - msg_row, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
+		disp_chars_msg(0, 23 - msg_row, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
 		msg_row++;
 		msg_delay = 100;
 		sidfx_play(2, SFXMessage, 3);
@@ -104,7 +110,7 @@ void msg_refresh(void)
 		for(char i=0; i<msg_row; i++)
 		{
 			msg_expand(messages[h & 31].msg, messages[h & 31].param);
-			disp_chars_msg(23 - i, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
+			disp_chars_msg(0, 23 - i, msg_buffer, 24, VCOL_BLACK, VCOL_WHITE | 16 * VCOL_LT_GREY);	
 			h++;
 		}
 	}

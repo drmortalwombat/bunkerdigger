@@ -156,6 +156,39 @@ void gmenu_key(char keyb)
 	}
 }
 
+__noinline bool map_visible(char cx, char cy)
+{
+	if (tile_is_bunker(cx, cy))
+		return true;
+
+	if (cx > 0)
+	{
+		if (tile_is_bunker(cx - 1, cy))
+			return true;		
+		if (cy > 0 && tile_is_bunker(cx - 1, cy - 1))
+			return true;				
+		if (cy < 15 && tile_is_bunker(cx - 1, cy + 1))
+			return true;				
+	}
+
+	if (cx < 15)
+	{
+		if (tile_is_bunker(cx + 1, cy))
+			return true;				
+		if (cy > 0 && tile_is_bunker(cx + 1, cy - 1))
+			return true;				
+		if (cy < 15 && tile_is_bunker(cx + 1, cy + 1))
+			return true;				
+	}
+
+	if (cy > 0 && tile_is_bunker(cx, cy - 1))
+		return true;				
+	if (cy < 15 && tile_is_bunker(cx, cy + 1))
+		return true;				
+
+	return false;
+}
+
 void gmenu_joy(signed char dx, signed char dy)
 {
 	if (statusview == STVIEW_MINIMAP)
@@ -169,6 +202,12 @@ void gmenu_joy(signed char dx, signed char dy)
 			cy--;
 		else if (dy > 0 && cy < 15)
 			cy++;
+
+		if (!map_visible(cx, cy))
+		{
+			cx = cursorx;
+			cy = cursory;
+		}
 
 		if (tmapmode == TMMODE_REDRAW)
 		{

@@ -12,6 +12,8 @@ extern __striped char * const HiresRow[25];
 extern __striped char * const ScreenRow[25];
 extern __striped char * const ColorRow[25];
 
+extern const char FontHiresData[];
+
 void disp_init(void);
 
 void disp_fill(char x, char y, char w, char h, char back);
@@ -22,7 +24,7 @@ void disp_char(char x, char y, char ch, char back, char color);
 
 void disp_chars(char x, char y, const char * text, char n, char back, char color);
 
-void disp_chars_msg(char y, const char * text, char n, char back, char color);
+void disp_chars_msg(char x, char y, const char * text, char n, char back, char color);
 
 void disp_space(char x, char y, char n, char back, char color);
 

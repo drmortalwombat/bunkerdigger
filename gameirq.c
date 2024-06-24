@@ -41,7 +41,7 @@ __interrupt void irq_lower(void)
 {
 //	vic.color_border = VCOL_GREEN;
 	vspr_update();
-	if (irqphase == IRQP_UPDATE_SPRITE)
+	if (irqphase == IRQP_UPDATE_SPRITE || irqphase == IRQP_INTRO)
 	{
 //		vic.color_border = VCOL_CYAN;
 		rirq_sort();
@@ -51,7 +51,9 @@ __interrupt void irq_lower(void)
 	if (irqphase == IRQP_WINDOW)
 		return;
 	
-	if (irqphase == IRQP_USER_INPUT)
+	if (irqphase == IRQP_INTRO)
+		;
+	else if (irqphase == IRQP_USER_INPUT)
 	{
 		irqphase = IRQP_MOVE_DIGGER;
 		irqcount++;
@@ -99,6 +101,8 @@ __interrupt void irq_upper(void)
 		for(char i=0; i<16; i++)
 			vspr_move(i, 0, 255);
 		vspr_sort();
+		break;
+	case IRQP_INTRO:
 		break;
 	}
 
