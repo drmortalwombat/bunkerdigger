@@ -18,21 +18,23 @@ enum StoryMessages
 	STM_RADIO_INVITES,
 	STM_ENEMY_MESSAGE,
 	STM_ENEMY_THREADS,
-	SIM_MOON_DESTROYED,
+	STM_MOON_DESTROYED,
 
-	SIM_ROCKET_PLANS,
-	SIM_ROCKET_BUILD,
-	SIM_ROCKET_READY,
-	SIM_ROCKET_LAUNCHED,
+	STM_ROCKET_PLANS,
+	STM_ROCKET_BUILD,
+	STM_ROCKET_READY,
+	STM_ROCKET_LAUNCHED,
 
-	SIM_MARS_READY,
-	SIM_MARS_ESCAPED,
+	STM_MARS_READY,
+	STM_MARS_ESCAPED,
 
-	SIM_ENEMY_INCOMING,
-	SIM_ENEMY_VICTORY,
+	STM_ENEMY_INCOMING,
+	STM_ENEMY_VICTORY,
 
 	STM_DIGGERS_DEAD,
 	STM_MOON_IMPACT,
+
+	STM_NEED_RESEARCH,
 
 	NUM_STORY_MESSAGES
 };
@@ -46,6 +48,8 @@ void window_close(void);
 void window_fill(char pat);
 
 void window_color_rect(char x, char y, char w, char h, char color);
+
+void window_color_rect2(char x, char y, char w, char h, char c0, char c1);
 
 void window_fill_rect(char x, char y, char w, char h, char pat);
 

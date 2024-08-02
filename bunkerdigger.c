@@ -106,7 +106,8 @@ bool game_save(void)
 		iec_write_bytes((char *)&messages, sizeof(messages));
 		iec_write_bytes((char *)&enemies, sizeof(enemies));
 		iec_write(rocket_count);
-		ok = true;
+		if (iec_status < IEC_ERROR)
+			ok = true;
 	}
 
 	iec_unlisten();
@@ -391,9 +392,9 @@ void game_menu(void)
 			}
 		}
 
-		window_color_rect(3, 3 + mi, 24, 1, 0xd1);
+		window_color_rect2(3, 3 + mi, 24, 1, 0x0d, 0x50);
 		vic_waitFrame();
-		window_color_rect(3, 3 + mi, 24, 1, 0x5d);
+		window_color_rect2(3, 3 + mi, 24, 1, 0x00, 0x5d);
 	}
 }
 
@@ -409,7 +410,7 @@ void game_destroy(void)
 	tile_effect = TILEF_EXPLODED;
 	for(char i=0; i<32; i++)
 	{
-		if (diggers[i].task != DTASK_DEAD)
+		if (diggers[i].state != DS_FREE && diggers[i].task != DTASK_DEAD)
 		{
 			diggers[i].task = DTASK_DEAD;
 			diggers[i].state = DS_DEAD;
@@ -460,10 +461,10 @@ int main(void)
 		if (time_days > enemy_days + 2)
 			story_pending |= 1ul << STM_ENEMY_THREADS;
 		if (time_days > enemy_days + 22)
-			story_pending |= 1ul << SIM_ENEMY_INCOMING;
+			story_pending |= 1ul << STM_ENEMY_INCOMING;
 		if (time_days > enemy_days + 25)
 		{
-			story_pending |= 1ul << SIM_ENEMY_VICTORY;
+			story_pending |= 1ul << STM_ENEMY_VICTORY;
 			game_destroy();
 		}
 		if (time_days > moon_days + 5)
@@ -471,6 +472,8 @@ int main(void)
 			story_pending |= 1ul << STM_MOON_IMPACT;
 			game_destroy();
 		}
+		if (time_days > 5 && room_count[RTILE_LABORATORY] == 0)
+			story_pending |= 1ul << STM_NEED_RESEARCH;
 
 
 		if (rocket_count < 200)
@@ -478,8 +481,8 @@ int main(void)
 			rocket_count++;
 			if (rocket_count == 200)
 			{
-				story_pending |= 1 << SIM_MOON_DESTROYED;
-				enemy_days = enemy_days;
+				story_pending |= 1ul << STM_MOON_DESTROYED;
+				enemy_days = 200;
 				moon_days = time_days;
 			}
 		}
@@ -540,7 +543,7 @@ int main(void)
 				rooms_display();
 
 			if (rooms_researched > RTILE_LAUNCH_TOP)
-				story_pending |= 1 << SIM_ROCKET_PLANS;
+				story_pending |= 1ul << STM_ROCKET_PLANS;
 
 		}
 		else if (gmenu != GMENU_NONE)
@@ -644,11 +647,11 @@ int main(void)
 				break;
 
 			case GMENU_LAUNCH:
-				if (story_pending & SIM_ROCKET_LAUNCHED)
+				if (story_pending & (1ul << STM_ROCKET_LAUNCHED))
 				{
-					if (rooms_launch(false))
+					if (rooms_launch(true))
 					{
-						story_pending |= 1 << SIM_MARS_ESCAPED;
+						story_pending |= 1ul << STM_MARS_ESCAPED;
 						tmapmode = TMMODE_REDRAW;			
 						rocket_count = 0;
 						tile_effect = TILEF_ESCAPED;
@@ -665,7 +668,7 @@ int main(void)
 				}
 				else if (rooms_launch(false))
 				{
-					story_pending |= 1 << SIM_ROCKET_LAUNCHED;
+					story_pending |= 1ul << STM_ROCKET_LAUNCHED;
 					tmapmode = TMMODE_REDRAW;			
 					rocket_count = 0;		
 				}

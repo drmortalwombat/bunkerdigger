@@ -140,7 +140,7 @@ void gmenu_key(char keyb)
 	case KSCAN_RETURN:
 		gmenu_push();
 		break;
-
+#if 0
 	case KSCAN_R:
 		researching = 0;
 		break;
@@ -153,6 +153,7 @@ void gmenu_key(char keyb)
 			res_stored[i] = MAX_STORAGE;
 		}
 		break;
+#endif
 	}
 }
 
@@ -278,7 +279,7 @@ void gmenu_joy(signed char dx, signed char dy)
 				do
 				{
 					di-=2;
-				} while (diggers[di].state <= DS_DEAD && di > 0);
+				} while (diggers[di].state <= DS_DEAD && di > 1);
 			}
 		}
 		else if (dy > 0)

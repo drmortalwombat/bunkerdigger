@@ -37,8 +37,12 @@ const char * StoryMessageTexts[] = {
 	"AWOKEN.\n\x01\x01\x01",
 
 	"\x01A LACK OF FRESH WATER WILL\n"
-	"KILL YOUR DWELLERS\n\x01\x01\x01",
+	"KILL YOUR DWELLERS\n"
+	"\x01A HYDRO WATER PROCESSING\n"
+	"MODULE MIGHT DO THE TRICK\n\x01\x01\x01",
 
+	"\x01OUR ENERGY CONSUMPTION IS\n"
+	"TOO HIGH.\n"
 	"\x01WE NEED MORE GENERATORS TO\n"
 	"KEEP UP WITH OUR DEMANDS.\n\x01\x01\x01",
 
@@ -79,7 +83,7 @@ const char * StoryMessageTexts[] = {
 	"\x01   WE NEED A BIGGER ROCKET\n"
 	"   FIVE STAGES TO REACH MARS\n\x01\x01\x01",
 
-	"\x01WITH THIS PLANS, WE CAN BUILD\n"
+	"\x01WITH THESE PLANS, WE CAN BUILD\n"
 	"A ROCKET TO REACH AND DESTROY\n"
 	"THE MOON BASE.\n\n"
 	"\x01WE WILL NEED AT LEAST A THREE\n"
@@ -93,7 +97,7 @@ const char * StoryMessageTexts[] = {
 	"BUILD THE ROCKET.\n\x01\x01\x01",
 
 	"\x01THE ULTIMATE WEAPON IS NOW\n"
-	"READY TO PUT INTO SERVICE\n\n"
+	"READY TO BE PUT INTO SERVICE\n\n"
 	"\x01AS SOON AS YOU GIVE THE\n"
 	"LAUNCH COMMAND, OUR ENEMIES\n"
 	"WILL BE BLOWN TO PIECES.\n\x01\x01\x01",
@@ -134,7 +138,7 @@ const char * StoryMessageTexts[] = {
 	"\n\n\nGAME OVER...\n\x01\x01\x01",
 
 	"\x01FINAL MESSAGE FROM BUNKER\n"
-	"SYSTEM - NO MORE LIVE SIGNS\n"
+	"SYSTEM - NO MORE LIFE SIGNS\n"
 	"DETECTED.\n\n"
 	"\x01SHUTTING DOWN REMAINING\n"
 	"HIBERNATION CAPSULES.\n\n"
@@ -146,6 +150,13 @@ const char * StoryMessageTexts[] = {
 	"MARY HAD A LITTLE LAMB..\x01..\n"
 	"LTIL\x01 LAMB...\x01\x01...\x01"
 	"\n\n\nGAME OVER...\n\x01\x01\x01",
+
+	"\x01WITH SO MANY UNRESEARCHED\n"
+	"BLUEPRINTS, IT MIGHT BE A\n"
+	"SMART MOVE TO BUILD A\n"
+	"RESEARCH LABORATORY.\n"
+	"\x01DIG DEEPER FOR SOME\n"
+	"CARBON.\n\x01\x01\x01"
 };
 
 #pragma code(code)
@@ -201,6 +212,23 @@ void window_color_rect(char x, char y, char w, char h, char color)
 		for(char j=0; j<w; j++)
 			cp[j] = color;
 		cp += 40;
+	}
+}
+
+void window_color_rect2(char x, char y, char w, char h, char c0, char c1)
+{
+	char	*	cp = Color + 40 * (winY + y) + (winX + x);
+	char	*	sp = Screen + 40 * (winY + y) + (winX + x);
+
+	for(char i=0; i<h; i++)
+	{
+		for(char j=0; j<w; j++)
+		{
+			cp[j] = c0;
+			sp[j] = c1;
+		}
+		cp += 40;
+		sp += 40;
 	}
 }
 

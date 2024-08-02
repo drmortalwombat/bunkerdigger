@@ -18,13 +18,27 @@ RIRQCode	rirqlow, rirqup, rirqmenu;
 signed char pjoyx, pjoyy;
 bool		pjoyb;
 
+char		key_queue;
+
+void key_scan(void)
+{
+	if (!key_queue)
+	{
+		keyb_poll();
+		if (keyb_key & KSCAN_QUAL_DOWN)
+			key_queue = keyb_key;
+	}
+}
+
 void user_interaction(void)
 {
-	keyb_poll();
 	joy_poll(0);
 
-	if (keyb_key & KSCAN_QUAL_DOWN)
-		gmenu_key(keyb_key & KSCAN_QUAL_MASK);
+	if (key_queue & KSCAN_QUAL_DOWN)
+	{
+		gmenu_key(key_queue & KSCAN_QUAL_MASK);
+		key_queue = 0;
+	}
 
 	if (joyb[0])
 		gmenu_nav(joyx[0]);
@@ -75,8 +89,7 @@ __interrupt void irq_upper(void)
 	case IRQP_MOVE_DIGGER:
 		diggers_move();
 		enemies_move();
-		break;
-	case IRQP_MOVE_ENEMY:
+		key_scan();
 		break;
 	case IRQP_UPDATE_SPRITE:
 //		vic.color_border = VCOL_YELLOW;
@@ -93,8 +106,10 @@ __interrupt void irq_upper(void)
 
 //		vic.color_border = VCOL_CYAN;
 		vspr_sort();
+		key_scan();
 		break;
 	case IRQP_USER_INPUT:
+		key_scan();
 		user_interaction();
 		break;
 	case IRQP_WINDOW:

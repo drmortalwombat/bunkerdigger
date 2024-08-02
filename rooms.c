@@ -97,7 +97,7 @@ void rooms_count(void)
 	if (room_count[RTILE_LAUNCH_TOP] > 0 &&
 		room_count[RTILE_LAUNCH_MID] > 0 &&
 		room_count[RTILE_LAUNCH_BOTTOM] > 0)
-		story_pending |= 1 << SIM_ROCKET_BUILD;
+		story_pending |= 1ul << STM_ROCKET_BUILD;
 
 
 	for(char i=0; i<NUM_RESOURCES; i++)
@@ -230,7 +230,7 @@ bool rooms_launch(bool mars)
 		!room_count[RTILE_MISSILE_BOTTOM])
 		return false;
 
-	char ri = rooms_find_rocket(mars ? 5 : 3);
+	char ri = rooms_find_rocket(mars ? 4 : 2);
 	if (ri == 0xff)
 		return false;
 

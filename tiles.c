@@ -244,7 +244,7 @@ bool tile_dig(char x, char y)
 {
 	if (TileMapFlags[16 * y + x] == GTYPE_ROCK && !room_count[RTILE_EXCAVATOR])
 	{
-		story_pending |= 1 << STM_DIGGING_ROCK;
+		story_pending |= 1ul << STM_DIGGING_ROCK;
 		return false;
 	}
 

@@ -17,6 +17,22 @@ void enemies_init(void)
 		enemies[i].state = ES_FREE;
 }
 
+static const char defmap[] = {
+	0, 1, 1, 2,
+	2, 3, 3, 4,
+	4, 5, 6, 8,
+	12, 16, 24, 32,
+	48
+};
+
+static const char defshift[] = {
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	1, 1, 1, 1,
+	2, 2, 2, 2,
+	3
+};
+
 void enemies_move(void)
 {
 	for(char i=0; i<8; i++)
@@ -82,11 +98,11 @@ void enemies_move(void)
 			if (!(enemies[i].count & 3))
 			{
 				char ti = enemies[i].target;
-				char def = diggers[ti].fight >> 2;
+				char def = defmap[diggers[ti].fight];
 
 				if (enemies[i].damage > def)
 				{
-					char dmg = enemies[i].damage - def;
+					char dmg = (enemies[i].damage - def) >> defshift[diggers[ti].fight];
 					if (diggers[ti].health > dmg)
 					{
 						if (!diggers[ti].warn && diggers[ti].health < 32)
@@ -145,14 +161,14 @@ static const struct EnemyType
 {
 	char	mi, color, health, damage;	
 }	EnemyProgression[] = {
-	{0x60, VCOL_BROWN,      0x10, 0x01},
-	{0x68, VCOL_YELLOW,     0x08, 0x03},
-	{0x60, VCOL_DARK_GREY,  0x20, 0x01},
-	{0x70, VCOL_LT_RED,     0x10, 0x04},
-	{0x68, VCOL_LT_BLUE,    0x20, 0x06},
-	{0x78, VCOL_DARK_GREY,  0x40, 0x08},
-	{0x70, VCOL_BROWN,      0x30, 0x0c},
-	{0x78, VCOL_PURPLE,     0x80, 0x10}	
+	{0x60, VCOL_BROWN,      0x10,   1},
+	{0x68, VCOL_YELLOW,     0x08,   3},
+	{0x60, VCOL_DARK_GREY,  0x14,   4},
+	{0x70, VCOL_LT_RED,     0x1c,   8},
+	{0x68, VCOL_LT_BLUE,    0x20,  12},
+	{0x78, VCOL_DARK_GREY,  0x40,  20},
+	{0x70, VCOL_BROWN,      0x30,  32},
+	{0x78, VCOL_PURPLE,     0x80,  64}	
 };
 
 void enemy_spawn(char ei)
@@ -163,7 +179,7 @@ void enemy_spawn(char ei)
 		char tf = TileFlags[BunkerMapData[ri]];
 		if ((tf & TF_BUNKER) && (tf & (TF_LEFT | TF_RIGHT)))
 		{
-			char et = (rand() & 255) * ((ri & 0xf0) + 0x10 + time_days) >> 12;
+			char et = ((rand() & 31) + 32) * ((ri & 0xf0) + 16 + 4 * time_days) >> 12;
 			if (et > 7) et = 7;
 
 			enemies[ei].tx = ri & 0x0f;

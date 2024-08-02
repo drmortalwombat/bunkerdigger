@@ -151,6 +151,14 @@ void digger_check_color(char di)
 
 char	warn_phase = 0;
 
+static const char attmap[] = {
+	1, 1, 1, 2,
+	2, 3, 3, 4,
+	6, 8, 12, 16,
+	20, 24, 28, 32,
+	48
+};
+
 void diggers_move(void)
 {
 	warn_phase++;
@@ -293,8 +301,14 @@ void diggers_move(void)
 			break;
 		case DS_DEFEND_LEFT:
 		case DS_DEFEND_RIGHT:
-			if (enemies[diggers[i].enemy].health > 0)
-				enemies[diggers[i].enemy].health--;			
+			{
+				char att = attmap[diggers[i].fight];
+				char ei = diggers[i].enemy;
+				if (enemies[ei].health > att)
+					enemies[ei].health -= att;	
+				else
+					enemies[ei].health = 0;	
+			}
 			if (!--diggers[i].count)
 			{
 				diggers[i].state = DS_IDLE;
@@ -786,7 +800,7 @@ bool digger_work(char di)
 bool digger_procreate(bool radio)
 {
 	if (diggers_born == 12 && room_count[RTILE_QUARTERS] > 6 && !radio)
-		story_pending |= 1 << STM_RADIO_INVITES;
+		story_pending |= 1ul << STM_RADIO_INVITES;
 
 	if (2 * room_count[RTILE_QUARTERS] > diggers_born && res_stored[RES_WATER] > 2 && diggers_born < (radio ? 32 : 12))
 	{
@@ -846,7 +860,7 @@ bool digger_procreate(bool radio)
 bool diggers_alive(void)
 {
 	for(char i=0; i<diggers_born; i++)
-		if (diggers[i].state != DS_DEAD)
+		if (diggers[i].task != DTASK_DEAD)
 			return true;
 	return false;
 }

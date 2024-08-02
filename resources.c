@@ -63,13 +63,13 @@ void res_generate(char di)
 			break;
 		case RTILE_CENTRIFUGE:
 			res_stored[RES_FUEL] += (diggers[di].ability + 7) >> 3;
-			if (story_pending & (1 << SIM_MOON_DESTROYED))
+			if (story_pending & (1ul << STM_MOON_DESTROYED))
 			{
 				if (res_stored[RES_FUEL] >= 80)
-					story_pending |= 1 << SIM_MARS_READY;
+					story_pending |= 1ul << STM_MARS_READY;
 			}
 			else if (res_stored[RES_FUEL] >= 48)
-				story_pending |= 1 << SIM_ROCKET_READY;
+				story_pending |= 1ul << STM_ROCKET_READY;
 			break;
 		case RTILE_VENTILATION:
 			{
@@ -96,7 +96,7 @@ void res_generate(char di)
 				}
 				if (radio_days > 28)
 				{
-					story_pending |= 1 << STM_ENEMY_MESSAGE;
+					story_pending |= 1ul << STM_ENEMY_MESSAGE;
 					if (enemy_days == 100)
 						enemy_days = time_days;
 				}
@@ -174,7 +174,7 @@ void res_update(void)
 	res_oxygen[4] += 1;
 
 	if (res_stored[RES_ENERGY] == 0)
-		story_pending |= 1 << STM_LOW_ENERGY;
+		story_pending |= 1ul << STM_LOW_ENERGY;
 
 	if (!(res_update_cnt & 15))
 		res_stored[RES_ENERGY] += 1;
@@ -241,7 +241,7 @@ void res_update(void)
 				res_stored[RES_WATER]--;
 			else if (diggers[j].health > 0)
 			{
-				story_pending |= 1 << STM_LOW_WATER;
+				story_pending |= 1ul << STM_LOW_WATER;
 				if (!diggers[j].warn && diggers[j].health < 16)
 					msg_queue(MSG_DIGGER_STARVING, j);
 				diggers[j].warn |= 31;
@@ -256,7 +256,7 @@ void res_update(void)
 	{		
 		if (diggers[i].state >= DS_IDLE && res_oxygen[diggers[i].ty] < 0 && diggers[i].health > 0)
 		{
-			story_pending |= 1 << STM_LOW_AIR;
+			story_pending |= 1ul << STM_LOW_AIR;
 			if (!diggers[i].warn && diggers[i].health < 16)
 				msg_queue(MSG_DIGGER_SUFFOCATING, i);
 			diggers[i].warn |= 31;
