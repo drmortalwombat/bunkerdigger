@@ -34,6 +34,8 @@ char	msg_head, msg_tail, msg_row, msg_delay;
 
 char msg_buffer[33];
 
+// On screen messages for game events, using lower case characters
+// for placeholders (d Digger name, b Building name)
 const char * msg_templates[] = {
 	"d DEHYBERNATED",
 	"d ARRIVED AT BUNKER",
@@ -53,6 +55,7 @@ void msg_init(void)
 	msg_delay = 0;
 }
 
+// Expand message placeholders
 void msg_expand(MessageType msg, char param)
 {
 	const char * tp = msg_templates[msg];

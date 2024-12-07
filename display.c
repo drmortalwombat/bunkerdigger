@@ -11,6 +11,8 @@ char FontHiresMask[512];
 #pragma align(FontHiresData, 256)
 #pragma align(FontHiresMask, 256)
 
+// Arrays of pointers to screen rows to avoid address calculations
+
 __striped char * const HiresRow[25] = {
 #for(i, 25)	Hires +  i * 320,
 };

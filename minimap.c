@@ -7,6 +7,7 @@ const char MinimapHiresData[] = {
 
 #pragma align(MinimapHiresData, 256)
 
+// Base address of the minimap hires bitmap rows
 __striped char * const MinimapHiresTab[16] = {
 	Hires + 24 * 8 + 0 * 320,
 	Hires + 24 * 8 + 1 * 320,

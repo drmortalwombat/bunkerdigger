@@ -17,6 +17,7 @@ void enemies_init(void)
 		enemies[i].state = ES_FREE;
 }
 
+// Base shield defence of digger against enemies
 static const char defmap[] = {
 	0, 1, 1, 2,
 	2, 3, 3, 4,
@@ -25,6 +26,7 @@ static const char defmap[] = {
 	48
 };
 
+// Impact muting of enemy attack in power of two
 static const char defshift[] = {
 	0, 0, 0, 0,
 	0, 0, 0, 0,
@@ -37,6 +39,7 @@ void enemies_move(void)
 {
 	for(char i=0; i<8; i++)
 	{	
+		// Remove enemies from mini map
 		if (statusview == STVIEW_MINIMAP && enemies[i].state != ES_FREE)
 		{
 			char dx = enemies[i].tx;
@@ -137,6 +140,7 @@ void enemies_move(void)
 			break;
 		}
 
+		// Add enemies back to minimap
 		if (statusview == STVIEW_MINIMAP && enemies[i].state != ES_FREE)
 		{
 			char dx = enemies[i].tx;
@@ -253,6 +257,7 @@ void enemies_iterate(char frames)
 			char ti = enemies[i].ty * 16 + enemies[i].tx;
 			char tf = TileFlags[BunkerMapData[ti]];
 
+			// Select random enemy action
 			switch (rand() & 255)
 			{
 			case 0 ... 31:
@@ -298,6 +303,7 @@ char enemies_sprites(char si, char sx, char sy)
 	{
 		for(char i=0; i<8; i++)
 		{	
+			// Assign enemies in map to remaining sprites
 			if (enemies[i].state != ES_FREE)
 			{
 				char dx = enemies[i].tx - sx;

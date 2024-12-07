@@ -75,6 +75,7 @@ bool game_save(void)
 	iec_open(save_drive, 2, "@0:DIGGER,P,W");
 	iec_listen(save_drive, 2);
 
+	// Magic code and save file version
 	iec_write(0x29);
 	if (iec_status < IEC_ERROR)
 	{
@@ -132,6 +133,9 @@ void game_init(void)
 	tmapx = 8; tmapy = 0;
 	cursorx = 8; cursory = 0;
 	rocket_count = 0xff;
+	buildingi = 0;
+	diggeri = 0;
+	statusview = STVIEW_MINIMAP;
 
 	rooms_count();
 }
@@ -142,6 +146,8 @@ bool game_load(void)
 
 	iec_open(save_drive, 2, "@0:DIGGER,P,R");
 	iec_talk(save_drive, 2);
+
+	// Magic code and save file version
 	char v = iec_read();
 	if (iec_status == IEC_OK && v >= 0x24)
 	{
@@ -259,10 +265,11 @@ enum MenuItem
 	MITEM_COUNT
 };
 
+// Display pause menu
 void game_menu(void)
 {
 	window_open(4, 7, 30, 12);
-	window_write(1,  1, "BUNKER CONTROL SYSTEM   V2.0");
+	window_write(1,  1, "BUNKER CONTROL SYSTEM   V2.5");
 	window_write(3,  3, "1.) CONTINUE");
 	window_write(3,  4, "2.) MUSIC          [---]");
 
@@ -284,10 +291,12 @@ void game_menu(void)
 
 	signed char pjoyy = 0;
 	bool		pjoyb = true;
+	bool		enter = true;
 	for(;;)
 	{
 		bool	select = false;
 
+		// Check menu usage with keyboard
 		keyb_poll();
 		if (keyb_key & KSCAN_QUAL_DOWN)
 		{
@@ -332,7 +341,7 @@ void game_menu(void)
 			}
 		}
 		joy_poll(0);
-		if (joyy[0] != pjoyy)
+		if (!joyb[0] && joyy[0] != pjoyy)
 		{
 			if (joyy[0] < 0 && mi > MITEM_CONTINUE)
 				mi--;
@@ -342,11 +351,17 @@ void game_menu(void)
 		pjoyy = joyy[0];
 		if (joyb[0] != pjoyb)
 		{
-			if (joyb[0])
-				select = true;
+			if (!joyb[0])
+			{
+				if (enter)
+					enter = false;
+				else
+					select = true;
+			}
 		}
 		pjoyb = joyb[0];
 
+		// Menu item selected
 		if (select)
 		{
 			switch (mi)
@@ -392,7 +407,10 @@ void game_menu(void)
 			}
 		}
 
-		window_color_rect2(3, 3 + mi, 24, 1, 0x0d, 0x50);
+		if (!enter && joyb[0])
+			window_color_rect2(3, 3 + mi, 24, 1, 0x01, 0xd5);
+		else
+			window_color_rect2(3, 3 + mi, 24, 1, 0x0d, 0x50);
 		vic_waitFrame();
 		window_color_rect2(3, 3 + mi, 24, 1, 0x00, 0x5d);
 	}
@@ -420,6 +438,7 @@ void game_destroy(void)
 
 int main(void)
 {
+	// Basic init code
 	save_drive = 8;
 
 	display_init();
@@ -429,33 +448,43 @@ int main(void)
 
 	gameirq_init();
 
+	// Cue to intro
 	display_intro();
 
+	// Start interrupt counter
 	statusview = STVIEW_MINIMAP;
 	char	rescount = irqcount;
 	char	pirqcount = irqcount;
 	char	upcount = 0;
 	bool	update_status = false;
 
-
+	// Init basic game state
 	game_init();
 
+	// Try loading previous game state
 	window_open(10, 10, 20, 3);
 	window_write(2, 1, "LOADING...");
 	game_load();
 
+	// Open startup menu
 //	minimap_draw();
 	game_menu();
 
+	// Clear screen and init game screen elements
 	memset(Hires, 0x00, 8000);
 	minimap_draw();
 	gmenu_init();
 
+	// Start the background music
+
 	music_patch_voice3(false);
 	music_init(TUNE_THEME_GENERAL_1);
 
+	// Main game loop
+
 	for(;;)
 	{
+		// Advance time based story elements
 		if (time_count >= 10)
 			story_pending |= 1ul << STM_INTRO;
 		if (time_days > enemy_days + 2)
@@ -475,7 +504,7 @@ int main(void)
 		if (time_days > 5 && room_count[RTILE_LABORATORY] == 0)
 			story_pending |= 1ul << STM_NEED_RESEARCH;
 
-
+		// Check for rocket launched
 		if (rocket_count < 200)
 		{
 			rocket_count++;
@@ -487,6 +516,7 @@ int main(void)
 			}
 		}
 
+		// Update game music
 		if (tune_queue == tune_current)
 		{
 			char c = tune_queue - TUNE_THEME_GENERAL_1 + 1 + (rand() & 1);
@@ -494,6 +524,7 @@ int main(void)
 			music_queue(TUNE_THEME_GENERAL_1 + c);
 		}
 
+		// Redraw screen when messages expire
 		if (msg_delay > 0)
 		{
 			msg_delay--;
@@ -548,6 +579,8 @@ int main(void)
 		}
 		else if (gmenu != GMENU_NONE)
 		{
+			// Process user menu selection
+
 			switch (gmenu)
 			{
 			case GMENU_MAP:
@@ -639,6 +672,7 @@ int main(void)
 
 			case GMENU_OPTIONS:
 				game_menu();
+				gmenu_set(0);
 				update_status = true;
 				break;
 
@@ -647,6 +681,7 @@ int main(void)
 				break;
 
 			case GMENU_LAUNCH:
+				// Check for mars or moon rocket launch
 				if (story_pending & (1ul << STM_ROCKET_LAUNCHED))
 				{
 					if (rooms_launch(true))
@@ -679,6 +714,8 @@ int main(void)
 		}
 		else
 		{	
+			// Check resource update every third frame, loop multiple times
+			// if we missed some
 			bool	update = false;
 			while ((char)(irqcount - rescount) >= 3)
 			{
@@ -690,21 +727,26 @@ int main(void)
 				upcount++;
 			}
 
+			// Update stats once if changed
 			if (update)
 			{
 				res_display();
 				digger_stats();
 			}
 
+			// Have the digger and enemy AI run
 			diggers_iterate();
 			enemies_iterate(irqcount);
 
+			// Have sex ... 
 			digger_procreate(false);
 
+			// Wait for the next frame
 			while (pirqcount == irqcount)
 				;
 			pirqcount = irqcount;
 
+			// Check for end of game state
 			if (upcount > 10)
 			{
 				if (statusview == STVIEW_BUILD)
@@ -719,6 +761,7 @@ int main(void)
 				upcount = 0;
 			}
 
+			// Check for pending game messages
 			if (story_messages() || update_status)
 			{
 				switch (statusview)

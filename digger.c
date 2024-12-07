@@ -30,6 +30,8 @@ static const char digger_task_char[] = {
 
 char diggers_born;
 
+// Names of diggers with a fixed size char array
+// of five per name
 const char digger_names[] = 
 	"MIKE JILL JIM  JANE JOE  CARL CLIFFLISA "
 	"MONA MARK BILL ANDY TILLYSUSANMARTHBETH "
@@ -38,11 +40,12 @@ const char digger_names[] =
 
 #pragma align(digger_names, 256)
 
+// Flags determining what type of features a digger excells at
 #define DIF_ABILITY			0x00
 #define DIF_FIGHT			0x40
 #define DIF_INTELLIGENCE	0x80
 
-
+// Digger features for all 32 possible diggers
 const char diggers_flags[] = {
 	DIF_ABILITY      + 0,
 	DIF_FIGHT        + 1,
@@ -85,6 +88,8 @@ const char diggers_flags[] = {
 	DIF_ABILITY      + 16
 };
 
+// Init diggers at game start, with only the first
+// one awake
 void diggers_init(void)
 {
 	for(char i=0; i<32; i++)
@@ -151,6 +156,7 @@ void digger_check_color(char di)
 
 char	warn_phase = 0;
 
+// Attack power of diggers based on attack feature
 static const char attmap[] = {
 	1, 1, 1, 2,
 	2, 3, 3, 4,
@@ -165,6 +171,7 @@ void diggers_move(void)
 
 	for(char i=0; i<32; i++)
 	{	
+		// Clear living digger from minimap 
 		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE)
 		{
 			char dx = diggers[i].tx;
@@ -320,6 +327,7 @@ void diggers_move(void)
 			break;
 		}
 
+		// Highlight digger in digger list, if active or under cursor
 		if (statusview == STVIEW_TEAM && diggers[i].state != DS_FREE)
 		{
 			char color = VCOL_BLACK;
@@ -330,6 +338,7 @@ void diggers_move(void)
 			ScreenRow[i >> 1][24 + 8 * (i & 1)] = color;
 		}
 
+		// Draw living digger on minimap 
 		if (statusview == STVIEW_MINIMAP && diggers[i].state != DS_FREE && !(diggers[i].warn & 1))
 		{
 			char dx = diggers[i].tx;
@@ -378,6 +387,7 @@ void digger_down(char di, char n)
 	diggers[di].state = DS_CLIMB_DOWN;
 }
 
+// Move digger towards target room
 void digger_move_to(char di, char mi)
 {
 	char ti = diggers[di].ty * 16 + diggers[di].tx;
@@ -386,6 +396,7 @@ void digger_move_to(char di, char mi)
 	char tx = mi & 0x0f;
 	char ty = mi >> 4;
 
+	// Check direction and initiate movement
 	if (tx < diggers[di].tx && (tf & TF_LEFT))
 		digger_left(di, diggers[di].tx - tx);
 	else if (tx > diggers[di].tx && (tf & TF_RIGHT))
@@ -396,6 +407,7 @@ void digger_move_to(char di, char mi)
 		digger_down(di, ty - diggers[di].ty);	
 }
 
+// Move digger aimlessly in a random direction
 void digger_move_random(char di)
 {
 	char ti = diggers[di].ty * 16 + diggers[di].tx;
@@ -424,6 +436,7 @@ void digger_move_random(char di)
 
 bool digger_defend(char di)
 {
+	// Check for enemies nearby to start defending
 	for(char i=0; i<8; i++)
 	{
 		if (enemies[i].state >= ES_IDLE &&
@@ -450,6 +463,7 @@ bool digger_defend(char di)
 	return false;
 }
 
+// Decide for digger what to do next
 void digger_decide(char di)
 {
 	char ti = diggers[di].ty * 16 + diggers[di].tx;
@@ -457,8 +471,10 @@ void digger_decide(char di)
 	switch (diggers[di].task)
 	{
 	case DTASK_MOVE:
+		// Check if reached target
 		if (ti == diggers[di].target)
 		{
+			// Start working or training if assigned to this room
 			RoomTile	rt = BunkerMapData[ti] - 16;
 			if (rt == RTILE_GYM || rt == RTILE_ARMOURY || rt == RTILE_STUDY)
 				diggers[di].task = DTASK_TRAIN;
@@ -468,6 +484,7 @@ void digger_decide(char di)
 		}
 		else
 		{
+			// Path finding to target room
 			char mi = tile_plan(ti, diggers[di].target);
 			if (mi == ti)
 			{
@@ -506,6 +523,7 @@ void diggers_iterate(void)
 {
 	for(char i=0; i<32; i++)
 	{	
+		// Check if digger just died
 		if (diggers[i].state >= DS_IDLE && diggers[i].health == 0)
 		{
 			msg_queue(MSG_DIGGER_KILLED, i);
@@ -530,9 +548,12 @@ char diggers_sprites(char si, char sx, char sy)
 			char dx = diggers[i].tx - sx;
 			char dy = diggers[i].ty - sy;
 
+			// Check if digger is visible in current map range
 			if (dx < 3 && dy < 3)
 			{
 				char c = diggers[i].color;
+
+				// Flash current digger
 				if (i == diggeri && (irqcount & 1))
 				{
 					if (irqcount & 2)
@@ -546,6 +567,7 @@ char diggers_sprites(char si, char sx, char sy)
 				if (mi == 64 + 13 || mi == 64 + 16 || mi == 64 + 5 || mi == 64 + 8)
 					tap = true;
 
+				// Assign it to the next sprite
 				vspr_set(si, 
 					12 + dx * 64 + diggers[i].sx * 4,
 					44 + dy * 64 + diggers[i].sy * 4,
@@ -638,13 +660,19 @@ void diggers_list(void)
 		if (i < diggers_born)
 		{
 			char c = VCOL_BLACK;
+			char dc = diggers[i].color;
 			if (i == diggeri)
-				c = VCOL_MED_GREY;
+			{
+				if (dc == VCOL_RED || dc == VCOL_BLUE)
+					c = VCOL_LT_GREY;
+				else
+					c = VCOL_DARK_GREY;
+			}
 
 			disp_char(x + 0, y, 92, c, VCOL_BLACK);
 			disp_char(x + 1, y, digger_task_char[diggers[i].task], c, VCOL_WHITE + 16 * VCOL_LT_GREY);
 			disp_vbar(x + 2, y, 8 - ((diggers[i].health + 7) >> 3), c + 16 * VCOL_LT_GREY, VCOL_LT_RED);
-			disp_chars(x + 3, y, digger_names + i * 5, 5, c, diggers[i].color + 16 * VCOL_DARK_GREY);
+			disp_chars(x + 3, y, digger_names + i * 5, 5, c, dc + 16 * VCOL_DARK_GREY);
 //			disp_char(x + 7, y, ' ', c, VCOL_BLACK);
 		}
 		else
@@ -806,6 +834,7 @@ bool digger_procreate(bool radio)
 	{
 		char ri = rand() & 255;
 		do {
+			// Only procreate in sleeping quarters
 			if (BunkerMapData[ri] == RTILE_QUARTERS + 16)
 			{
 				char di = diggers_born;

@@ -57,6 +57,7 @@ char						room_count[22];
 
 void rooms_init(void)
 {
+	// Basic researched and blueprint levels
 	room_num_construction = 0;
 	rooms_researched = RTILE_LABORATORY + 1;
 	rooms_blueprints = RTILE_RADIO + 1;	
@@ -67,6 +68,8 @@ void rooms_count(void)
 {
 	for(char i=0; i<22; i++)
 		room_count[i] = 0;
+
+	// Loop over full map and count room types
 	for(int i=0; i<256; i++)
 	{
 		char tile = BunkerMapData[i];
@@ -77,6 +80,7 @@ void rooms_count(void)
 		}
 	}
 
+	// Calculate effective storage based on rooms
 	char	nstore = room_count[RTILE_STORAGE];
 
 	res_storage[RES_ENERGY] = 12 + 8 * room_count[RTILE_GENERATOR];
@@ -94,12 +98,13 @@ void rooms_count(void)
 		room_count[RTILE_MISSILE_MID] +
 		room_count[RTILE_MISSILE_BOTTOM]) * 16;
 
+	// Check rocket status
 	if (room_count[RTILE_LAUNCH_TOP] > 0 &&
 		room_count[RTILE_LAUNCH_MID] > 0 &&
 		room_count[RTILE_LAUNCH_BOTTOM] > 0)
 		story_pending |= 1ul << STM_ROCKET_BUILD;
 
-
+	// Limit storage space to max level
 	for(char i=0; i<NUM_RESOURCES; i++)
 	{
 		char s = (res_storage[i] + 15) & ~15;
@@ -133,7 +138,10 @@ void rooms_display(void)
 				c = VCOL_RED;
 		}
 		else if (i == buildingi)
-			c = VCOL_MED_GREY;
+		{
+			c = VCOL_GREEN;
+			fc = VCOL_WHITE + 16 * VCOL_LT_GREEN;
+		}
 
 		char t = '0';
 		while (cnt >= 10)
@@ -260,6 +268,7 @@ bool rooms_check_construction(void)
 	{		
 		bool	done = false;
 
+		// Check for construction progress
 		if (res_stored[RES_BUILDING] && !--room_constructions[i].count)
 		{
 			res_stored[RES_BUILDING]--;
@@ -272,11 +281,14 @@ bool rooms_check_construction(void)
 		char x = room_constructions[i].tile & 0x0f;
 		char y = room_constructions[i].tile >> 4;
 
+		// Display progress bar
 		if ((char)(x - mapx) < 3 && (char)(y - mapy) < 3)
 			disp_bbar(8 * (x - mapx) + 2, 8 * (y - mapy) + 4, room_constructions[i].progress);
 
 		if (done)
 		{
+			// Room completed
+
 			char r = room_constructions[i].room;
 			char t = room_constructions[i].tile;
 
@@ -286,6 +298,7 @@ bool rooms_check_construction(void)
 			{
 				if (t >= 16)
 				{
+					// Patch rocket tile for top/bottom part
 					if (t >= 240 || BunkerMapData[t + 16] < RTILE_LAUNCH_TOP + TILE_ROOMS || BunkerMapData[t + 16] > RTILE_MISSILE_BOTTOM + TILE_ROOMS)
 						r += 2;
 					else

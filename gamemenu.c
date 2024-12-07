@@ -52,7 +52,7 @@ void gmenu_init(void)
 		disp_menu(4 * x, gamemenutexts[x], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	}
 
-	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
+	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_GREEN, VCOL_BLACK | VCOL_DARK_GREY * 16, VCOL_WHITE | VCOL_LT_GREEN * 16);
 }
 
 
@@ -60,7 +60,7 @@ void gmenu_set(char x)
 {
 	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_BLUE, VCOL_WHITE | VCOL_LT_BLUE * 16, VCOL_YELLOW | VCOL_GREEN * 16);
 	gmenux = x;
-	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_RED, VCOL_WHITE | VCOL_YELLOW * 16, VCOL_YELLOW | VCOL_ORANGE * 16);
+	disp_menu_color(4 * gmenux, gamemenutexts[gmenux], VCOL_GREEN, VCOL_BLACK | VCOL_DARK_GREY * 16, VCOL_WHITE | VCOL_LT_GREEN * 16);
 }
 
 
@@ -157,6 +157,8 @@ void gmenu_key(char keyb)
 	}
 }
 
+// Check if map would be visible at a given location, base on the
+// availability of at least a single bunker/room tile on the 3x3 view
 __noinline bool map_visible(char cx, char cy)
 {
 	if (tile_is_bunker(cx, cy))
@@ -195,6 +197,8 @@ void gmenu_joy(signed char dx, signed char dy)
 	if (statusview == STVIEW_MINIMAP)
 	{
 		char	cx = cursorx, cy = cursory;
+
+		// Move cursor in map view
 		if (dx < 0 && cx > 0)
 			cx--;
 		else if (dx > 0 && cx < 15)
@@ -252,6 +256,7 @@ void gmenu_joy(signed char dx, signed char dy)
 	{
 		char di = diggeri;
 
+		// Move cursor in digger status view
 		if (dx < 0)
 		{
 			if (di > 0)
@@ -303,6 +308,7 @@ void gmenu_joy(signed char dx, signed char dy)
 	}
 	else if (statusview == STVIEW_BUILD)
 	{
+		// Move cursor in building menu
 		char bi = buildingi;
 
 		if (dy < 0)

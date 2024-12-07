@@ -24,6 +24,7 @@ struct BunkerTilesBuffer
 	char			a[10 * sizeof(BunkerColor0Data)];
 };
 
+// Reshufle tiles in compile phase using constexpr
 constexpr BunkerTilesBuffer build_BunkerTilesBuffer(void)
 {
 const char BunkerHiresData[] = {
@@ -72,6 +73,7 @@ char TileMapFlags[256];
 #pragma align(BunkerColor0Data, 256)
 #pragma align(BunkerColor1Data, 256)
 
+// Flags describing exits and features of various rooms
 const char TileFlags[] = {
 	TF_BUNKER | TF_LEFT | TF_RIGHT | TF_UP | TF_DOWN,
 	TF_BUNKER | TF_LEFT | TF_UP | TF_DOWN,
@@ -126,6 +128,7 @@ const char TileFlags[] = {
 	TF_NONE, TF_NONE, TF_NONE, TF_NONE
 };
 
+// Map layout
 struct tile_strata
 {
 	GroundType	type;
@@ -170,6 +173,7 @@ struct tile_strata
 
 TileEffect	tile_effect;
 
+// Init tiles and map
 void tiles_init(void)
 {
 	for(int i=0; i<256; i++)
@@ -240,6 +244,7 @@ bool tile_expand(char x, char y, char flags)
 	return false;
 }
 
+// Build a bunker at a given spot, connecting it to neighbouring bunkers
 bool tile_dig(char x, char y)
 {
 	if (TileMapFlags[16 * y + x] == GTYPE_ROCK && !room_count[RTILE_EXCAVATOR])
@@ -289,6 +294,7 @@ bool tile_dig(char x, char y)
 		return false;
 }
 
+// Colors for resource types
 static char tile_ground_color[] = {
 	VCOL_BROWN,
 	VCOL_DARK_GREY,
@@ -299,7 +305,6 @@ static char tile_ground_color[] = {
 
 void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 {
-#if 1
 	const char * const * tp = bunkerTiles + 64 * tile;
 
 	for(char iy=0; iy<8; iy++)
@@ -321,30 +326,7 @@ void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 		cp += 40;
 		tp += 8;
 	}
-#else
-	const unsigned short * tp = BunkerTileData + 64 * tile;
 
-	for(char iy=0; iy<8; iy++)
-	{
-		for(char ix=0; ix<8; ix++)
-		{
-			unsigned short c = tp[ix];
-			const char * shp = BunkerHiresData + 8 * c;
-			#pragma unroll(full)
-			for(char i=0; i<8; i++)
-				hp[i] = shp[i];
-
-			sp[ix] = BunkerColor1Data[c];
-			cp[ix] = BunkerColor0Data[c];
-			hp += 8;
-		}
-
-		hp += 320 - 64;
-		sp += 40;
-		cp += 40;
-		tp += 8;
-	}
-#endif
 	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
 	cp -= 40;
 	for(char ix=0; ix<8; ix++)
@@ -356,7 +338,6 @@ void tile_draw_p(char tile, char flags, char * hp, char * sp, char * cp)
 
 void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 {
-#if 1
 	const char * const * tp = bunkerTiles + 64 * tile;
 	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
 
@@ -379,32 +360,6 @@ void tile_draw_g(char tile, char flags, char * hp, char * sp, char * cp)
 		cp += 40;
 		tp += 8;
 	}
-#else
-	const unsigned short * tp = BunkerTileData + 64 * tile;
-
-	char	gc = tile_ground_color[flags & GROUND_TYPE_MASK];
-
-	for(char iy=0; iy<8; iy++)
-	{
-		for(char ix=0; ix<8; ix++)
-		{
-			unsigned short c = tp[ix];
-			const char * shp = BunkerHiresData + 8 * c;
-			#pragma unroll(full)
-			for(char i=0; i<8; i++)
-				hp[i] = shp[i];
-
-			sp[ix] = BunkerColor1Data[c];
-			cp[ix] = gc;
-			hp += 8;
-		}
-
-		hp += 320 - 64;
-		sp += 40;
-		cp += 40;
-		tp += 8;
-	}
-#endif
 }
 
 void tile_draw_e(char tile, char flags, char * hp, char * sp, char * cp)
@@ -549,6 +504,7 @@ static char cursor_and_1[] = {
 
 char cursor_back[4][8];
 
+// Draw map cursor, saving tile images in variable
 void tile_cursor_show(char x, char y)
 {
 	__assume(y < 3);
@@ -572,6 +528,7 @@ void tile_cursor_show(char x, char y)
 	}
 }
 
+// Restore tiles under map cursor
 void tile_cursor_hide(char x, char y)
 {
 	__assume(y < 3);
@@ -595,23 +552,33 @@ char queue[256];
 signed char dist[256];
 #pragma bss(bss)
 
+// Path finding from si to di
 char tile_plan(char si, char di)
 {
+	// Check if already at target
 	if (si == di)
 		return di;
 
+	// Clear distance for all map entries
 	for(int i=0; i<256; i++)
 		dist[i] = 0;
 
+	// Init target spot as start of search space
 	dist[di] = 99;
 	queue[0] = di;
 
+	// Loop while there are ways to explore
 	char ri = 0, wi = 1;
 	while (ri < wi)
 	{
+		// Get next queue entry
 		char p = queue[ri++];
+
+		// Check if start reached
 		if (p == si)
 		{
+			// Find direct move from start tile to first
+			// deviation from initial direction
 			signed char dir = dist[p];
 
 			do {
@@ -622,6 +589,7 @@ char tile_plan(char si, char di)
 		}
 		else
 		{
+			// Flood fill
 			char tf = TileFlags[BunkerMapData[p]];
 
 			if ((tf & TF_LEFT) && dist[(char)(p - 1)] == 0)

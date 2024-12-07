@@ -163,9 +163,11 @@ const char * StoryMessageTexts[] = {
 
 bool story_messages(void)
 {
+	// Get bitfield of messages pending but not yet shown
 	unsigned long m = story_pending & ~story_shown;
 	if (m)
 	{
+		// Find first of these
 		StoryMessages i = 0;
 		while (!(m & 1))
 		{
@@ -173,8 +175,10 @@ bool story_messages(void)
 			i++;
 		}
 
+		// Mark as shown
 		story_shown |= 1ul << i;
 
+		// Print text into screen window
 		window_open(4, 7, 30, 10);
 		window_print(StoryMessageTexts[i]);
 		window_close();
@@ -270,6 +274,8 @@ void window_scroll(void)
 		wp[x] = 0;
 }
 
+// Delay text output and check for SPACE to exit text
+// display early
 bool window_check_close(char delay)
 {
 	for(char i=0; i<delay; i++)
@@ -294,8 +300,10 @@ void window_print(const char * text)
 
 	char		i = 0;
 
+	// Loop over message string
 	while (char	c = *text++)
 	{
+		// Line feed
 		if (c == '\n')
 		{			
 			wlp += 320; wp = wlp;
@@ -303,12 +311,14 @@ void window_print(const char * text)
 		}
 		else if (c == 1)
 		{
+			// Delay
 			*sp = 0xd1;
 			for(char j=0; j<8; j++)
 				wp[j] = 0xaa;
 			if (psp)
 				*psp = 0x5d;
 			
+			// Wait 80 frames
 			for(char j=0; j<5; j++)
 			{
 				if (window_check_close(4))
@@ -331,21 +341,26 @@ void window_print(const char * text)
 			if (!(i & 1))
 				sidfx_play(2, CharSFX, 1);
 
+			// Flash cursor
 			*sp = 0xd1;
 			for(char j=0; j<8; j++)
 				wp[j] = 0xaa;
 
+			// Wait frame
 			if (window_check_close(1))
 				return;
 
 			const char * cp = FontHiresData + 8 * (c & 0x3f);
 
+			// Draw char
 			for(char j=0; j<8; j++)
 				wp[j] = cp[j];
 
+			// Wait frame
 			if (window_check_close(1))
 				return;
 
+			// Change char color
 			if (psp)
 				*psp = 0x5d;
 			psp = sp;
@@ -393,7 +408,7 @@ char window_write_uint(char x, char y, unsigned u)
 	return window_write(x, y, buffer);
 }
 
-
+// Masks for window border
 static const char wmand[] = {
 	0xff, 0xff, 0xff, 0xff, 0xf0, 0xf0, 0xf0, 0xf0,
 	0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,

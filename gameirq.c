@@ -20,6 +20,9 @@ bool		pjoyb;
 
 char		key_queue;
 
+// keyboard scan with a single key buffer, called during every interrupt
+// to not miss a keystroke, but evaluated only in the user interaction
+// interrupt phase
 void key_scan(void)
 {
 	if (!key_queue)
@@ -41,7 +44,10 @@ void user_interaction(void)
 	}
 
 	if (joyb[0])
-		gmenu_nav(joyx[0]);
+	{
+		if (joyx[0] != pjoyx)
+			gmenu_nav(joyx[0]);
+	}
 	else if (pjoyb)
 		gmenu_push();
 	else if (joyx[0] != pjoyx || joyy[0] != pjoyy || tmapmode == TMMODE_DRAWN)
@@ -51,6 +57,7 @@ void user_interaction(void)
 	pjoyb = joyb[0];
 }
 
+// Lower IRQ mainly used to update sprite multiplexer
 __interrupt void irq_lower(void)
 {
 //	vic.color_border = VCOL_GREEN;
@@ -58,7 +65,7 @@ __interrupt void irq_lower(void)
 	if (irqphase == IRQP_UPDATE_SPRITE || irqphase == IRQP_INTRO)
 	{
 //		vic.color_border = VCOL_CYAN;
-		rirq_sort();
+		rirq_sort(true);
 	}
 //	vic.color_border = VCOL_BLACK;
 
@@ -78,6 +85,7 @@ __interrupt void irq_lower(void)
 	vic.spr_priority = 0x00;
 }
 
+// Upper IRQ main digger/enemy operations and user GUI interaction
 __interrupt void irq_upper(void)
 {
 //	vic.color_border = VCOL_YELLOW;
